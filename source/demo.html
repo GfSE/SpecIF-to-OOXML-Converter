@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SpecIF to OOXML</title>
+	<meta charset="utf-8" />
+	<!--<meta http-equiv="cache-control" content="no-Cache" />-->
+	<meta http-equiv="expires" content="0" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<script type="text/javascript" src="./lib/filesaver/src/fileSaver.js"></script>
+	<script type="text/javascript" src="./lib/jszip/dist/jszip.js"></script>
+	<script type="text/javascript" src="./js/toFile.js"></script>
+	<script type="text/javascript" src="./js/toOoxml.js"></script>
+	<script type="text/javascript" src="./test/specifData.js"></script>
+</head>
+<body>
+<div id="main">
+	<h1>SpecIF to OOXML</h1>
+</div>
+<script type="text/javascript">
+(function() {
+	// the DOM is available now.
+	console.debug('start');
+	var specif = specifData(),
+		options = { 
+			filePath: 'https://se.reqif.net/reqif/v0.92/projects/'+specif.id+'/rev/0/files',
+			// If a hidden property is defined with value, it is suppressed only if it has this value;
+			// if the value is undefined, the property is suppressed in all cases.
+			hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],
+			hideEmptyProperties: true,
+			propertiesLabel: 'Properties',
+			statementsLabel: 'Statements'
+		};
+	toFile( specif, options )
+})()
+</script>
+</body>
+</html>
