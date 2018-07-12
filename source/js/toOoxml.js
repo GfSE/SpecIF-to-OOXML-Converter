@@ -46,6 +46,7 @@ function toOoxml( specifData, opts ) {
 	
 	// All required parameters are available, so we can begin.
 	var ooxml = {
+			headings: [],
 			sections: [],		// a xhtml file per SpecIF hierarchy
 			images: []
 		};
@@ -54,10 +55,12 @@ function toOoxml( specifData, opts ) {
 	ooxml.sections.push(
 		ooxmlOf( 
 			null,
-			null,
+			specifData.title,
 			'<div class="title">'+specifData.title+'</div>'
 		)
-	);
+		
+	)
+//	console.debug('sections push',ooxml.sections.push);
 	
 	// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
 	let firstHierarchySection = ooxml.sections.length;  // index of the next section number
@@ -71,8 +74,17 @@ function toOoxml( specifData, opts ) {
 		)
 	};
 
-//	console.debug('ooxml',ooxml);
+    console.debug('ooxmlinhalt',ooxml);
 	return ooxml
+	
+function pushHeading( t, pars ) {
+		ooxml.headings.push({
+				id: pars.nodeId,
+				title: t,
+				section: ooxml.sections.length,  // the index of the section in preparation (before it is pushed)
+				level: pars.level
+		})
+	}	
 	
 	// ---------------
 	function titleValOf( r, rC, opts ) {
@@ -84,6 +96,8 @@ function toOoxml( specifData, opts ) {
 				rC.isHeading = rC.isHeading || opts.headingProperties.indexOf(pr.title)>-1;
 				if( opts.headingProperties.indexOf(pr.title)>-1
 					|| opts.titleProperties.indexOf(pr.title)>-1 ) {
+//						console.debug('prTitle',pr.title);
+//						console.debug('prValue',pr.value);
 						return pr.value
 				}
 			}
@@ -100,7 +114,17 @@ function toOoxml( specifData, opts ) {
 		if( !pars || pars.level<1 ) return (ti?ic+ti:'');  // Rückgabe als Rohtext
 		// andernfalls Rückgabe als Kapitelüberschrift:
 		let h = rC.isHeading?2:3;
-		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
+//		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
+		return '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
+                +        '<w:pPr>'
+                +            '<w:pStyle w:val="berschrift'+h+'" />'
+                +        '</w:pPr>'
+                +        '<w:r w:rsidRPr="00997056">'
+//              +            '<w:t>'+h+' id="'+pars.nodeId+'" '+(ti?ic+ti:'')+'</w:t>'
+				+            '<w:t>'+(ti?ic+ti:'')+'</w:t>'
+                +        '</w:r>'
+                +    '</w:p>'
+
 	}
 	function statementsOf( r, opts ) {
 		if( !opts.statementsLabel ) return '';
@@ -127,7 +151,7 @@ function toOoxml( specifData, opts ) {
 		ct += '<table class="statementTable"><tbody>';
 		for( cid in sts ) {
 			// we don't have (and don't need) the individual statement, just the class:
-			cl = itemById(specifData[sClasses],cid);   // Suchr die Klasse der betreffenden Relation
+			cl = itemById(specifData[sClasses],cid);   // Suche die Klasse der betreffenden Relation
 			// table with 3 columns:
 			if( sts[cid].subjects.length>0 ) {
 				ct += '<tr><td>';
@@ -159,7 +183,7 @@ function toOoxml( specifData, opts ) {
 		for( m=0, M=specifData.hierarchies.length; m<M; m++ ) {
 			// for all hierarchies starting with the current one 'h':
 			y = (m+h) % M;  
-	//		console.debug( 'nodes', m, y, specifData.hierarchies );
+//			console.debug( 'nodes', m, y, specifData.hierarchies );
 			if( specifData.hierarchies[y].nodes )
 				for( n=0, N=specifData.hierarchies[y].nodes.length; n<N; n++ ) {
 					ndId = ndByRef( specifData.hierarchies[y].nodes[n] );
@@ -473,15 +497,27 @@ function toOoxml( specifData, opts ) {
 //				+	statementsOf( r, opts )
 				+	paragraphOf( nd.nodes[i], lvl+1 )					// rekursiv für den Unterbaum - Chapter
 		};
-		return ch
+//		console.debug( 'ch', ch )
+				return ch
 	}
 	function ooxmlOf( sectId, sectTitle, body ) {
 		// make a ooxml file from the content provided,
-		// this is the frsme of the file:
-		return	
-			(sectTitle?	'<h1'+(sectId?' id="'+sectId+'"':'')+'>'+sectTitle+'</h1>' : '')		//prüft auf vorhandene Kapitelüberschrift
-			+				body
-	}
+		// this is the frame of the file:
+//		console.debug( 'ooxmlOf secID', sectId )
+//		console.debug( 'ooxmlOf secTitle', sectTitle )
+//		console.debug( 'ooxmlOf body', body )
+		
+
+		let v1 = sectId?' id="'+sectId+'"':'';
+//		console.debug( 'ooxmlOf v1', v1 )
+		let v2 = sectTitle?	'<h1'+v1+'>'+sectTitle+'</h1>' : '';
+//		console.debug( 'ooxmlOf v2', v2 )
+		let v3 = body? body:'';
+//		console.debug( 'ooxmlOf v3', v3 )
+		return 		(v1)		//prüft auf vorhandene Kapitelüberschrift
+			+				(v3)
+		}
+
 
 	function itemById(L,id) {
 		if(!L||!id) return undefined;

@@ -12,8 +12,8 @@ function toFile( specifData, opts ) {
 	if( opts.linkNotUnderlined==undefined ) opts.linkNotUnderlined = false;
 	if( opts.preferPng==undefined ) opts.preferPng = true;
 		
-	// get the list of available files:
-/*	if( !specifData.files || specifData.files.length<1 )
+/*	// get the list of available files:
+	if( !specifData.files || specifData.files.length<1 )
 		get( 
 			opts.filePath+'.json', 
 			'arraybuffer',
@@ -31,6 +31,7 @@ function toFile( specifData, opts ) {
 			}, 
 			function(xhr) { 
 				// no files supplied:
+				console.debug( 'toFile',xhr);
 				specifData.files = [];
 				createOoxml()
 			}, 
@@ -44,11 +45,10 @@ function toFile( specifData, opts ) {
 	// -----------------------
 	function createOoxml() {
 		// All required parameters are available, so we can begin.
-		let i=null, I=null;
-		let file = toOoxml( specifData, opts );
-		
+		let i=null, I=null,
+			file = toOoxml( specifData, opts );
+//		console.debug( 'ooxml',file );
 		file.fileName = specifData.title;
-//		console.debug( 'files', specifData.files );
 
 /*		file.styles = 	
 					'body { margin-top:2%; margin-right:2%; margin-bottom:2%; margin-left:2%; font-family:Arial,sans-serif; font-size:100%; font-weight: normal; } \n'
@@ -79,15 +79,9 @@ function toFile( specifData, opts ) {
 			+			'<dc:rights>'+specifData.rights.title+'</dc:rights>'
 			+		'</metadata>'
 */
-		file.content = 'Hallo Welt'
-		for( i=0,I=file.sections.length; i<I; i++ ) {
-			file.content += i;
-//			file.content += '<item id="sect'+i+'" href="Text/sect'+i+'.xhtml" media-type="application/xhtml+xml" />'
-		};
 
-/*		Test mit 2 Textzeilen im Dokument
-
-file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+// Dokument-Beginn		
+		file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 				+	'	<?mso-application progid="Word.Document"?>	'
 +	'	<pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">	'
 +	'	    <pkg:part pkg:name="/_rels/.rels" pkg:contentType="application/vnd.openxmlformats-package.relationships+xml" pkg:padding="512">	'
@@ -114,7 +108,7 @@ file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 +	'	 <pkg:xmlData>	'
 +	'	     <w:document mc:Ignorable="w14 w15 wp14" xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">	'
 +	'	  <w:body>     	'
-+	'		<w:p w:rsidR="00932176" w:rsidRPr="00F717F9" w:rsidRDefault="00F717F9" w:rsidP="00F717F9">	'
++ 	'<w:p w:rsidR="00932176" w:rsidRPr="00F717F9" w:rsidRDefault="00F717F9" w:rsidP="00F717F9">	'
 +	'	                        <w:pPr>	'
 +	'	                            <w:rPr>	'
 +	'	                                <w:lang w:val="en-US" />	'
@@ -124,7 +118,38 @@ file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 +	'	                            <w:rPr>	'
 +	'	                                <w:lang w:val="en-US" />	'
 +	'	                            </w:rPr>	'
-+	'	                            <w:t>Hallo Welt!</w:t>	'
++	'	                            <w:t>		';
+
+		
+//		for( i=0,I=file.sections.length; i<I; i++ ) {
+//			file.content += ' '+ i +' '+ specifData.title;
+//			file.content += '<item id="sect'+i+'" href="Text/sect'+i+'.xhtml" media-type="application/xhtml+xml" />'
+//		};
+//		console.debug( 'specifData.sections.length',file.sections.length);
+		for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
+			file.content += ' '+specifData.hierarchies[h].title;			//paragraphOf( specifData.hierarchies[h], 1 )
+			
+//			for ( var k=0,K= specifData.hierarchies.node.length;k<K; k++) {
+//				file.content += ' '+specifData.hierarchies.node[k].id;
+//			}		
+						
+		};
+		
+		
+		
+		for( i=0,I=file.headings.length; i<I; i++ ) {			// file.headings.length = 0 -> wird nicht ausgeführt		
+				file.content += 	'<navPoint id="tocHd'+i+'" playOrder="'+(i+1)+'">'
+		//		+				'<navLabel><text>'+file.headings[i].title+'</text></navLabel>'
+		//		+				'<content src="Text/sect'+file.headings[i].section+'.xhtml#'+file.headings[i].id+'"/>'
+		//		+			'</navPoint>'
+		};
+
+		let t=file.sections.length; 
+			file.content += file.sections[t-1];
+			console.debug('fileSections',file.sections[t-1]);
+
+// Dokument-Ende			
+file.content += '</w:t>	'
 +	'	                        </w:r>	'
 +	'	                        <w:bookmarkStart w:id="0" w:name="_GoBack" />	'
 +	'	                        <w:bookmarkEnd w:id="0" />	'
@@ -975,6 +1000,28 @@ file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 +	'	   <w:szCs w:val="26" />	'
 +	'	      </w:rPr>	'
 +	'	  </w:style>	'
++	'	<w:style w:type="paragraph" w:styleId="berschrift3">	'
++	'	                    <w:name w:val="heading 3" />	'
++	'	                    <w:basedOn w:val="Standard" />	'
++	'	                    <w:next w:val="Standard" />	'
++	'	                    <w:link w:val="berschrift3Zchn" />	'
++	'	                    <w:uiPriority w:val="9" />	'
++	'	                    <w:unhideWhenUsed />	'
++	'	                    <w:qFormat />	'
++	'	                    <w:rsid w:val="00ED3CEC" />	'
++	'	                    <w:pPr>	'
++	'	                        <w:keepNext />	'
++	'	                        <w:keepLines />	'
++	'	                        <w:spacing w:before="40" w:after="0" />	'
++	'	                        <w:outlineLvl w:val="2" />	'
++	'	                    </w:pPr>	'
++	'	                    <w:rPr>	'
++	'	                        <w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi" />	'
++	'	                        <w:color w:val="1F4D78" w:themeColor="accent1" w:themeShade="7F" />	'
++	'	                        <w:sz w:val="24" />	'
++	'	                        <w:szCs w:val="24" />	'
++	'	                    </w:rPr>	'
++	'	                </w:style>	'
 +	'	  <w:style w:type="character" w:default="1" w:styleId="Absatz-Standardschriftart">	'
 +	'	      <w:name w:val="Default Paragraph Font" />	'
 +	'	      <w:uiPriority w:val="1" />	'
@@ -1033,10 +1080,12 @@ file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 +	'	    </pkg:part>	'
 +	'	</pkg:package>	';
 
-*/
-	//	console.debug('file',file);
+
+//		console.debug('file',file);
 		storeOoxml(file)
 	}
+	
+	
 	function storeOoxml( xml ) {
 		let i=null, I=null,
 			fileContent = '';
