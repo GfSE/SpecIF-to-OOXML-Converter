@@ -107,18 +107,7 @@ function toFile( specifData, opts ) {
 +	'	    <pkg:part pkg:name="/word/document.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml">	'
 +	'	 <pkg:xmlData>	'
 +	'	     <w:document mc:Ignorable="w14 w15 wp14" xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">	'
-+	'	  <w:body>     	'
-+ 	'<w:p w:rsidR="00932176" w:rsidRPr="00F717F9" w:rsidRDefault="00F717F9" w:rsidP="00F717F9">	'
-+	'	                        <w:pPr>	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                        </w:pPr>	'
-+	'	                        <w:r>	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                            <w:t>		';
++	'	  <w:body>     	';
 
 		
 //		for( i=0,I=file.sections.length; i<I; i++ ) {
@@ -126,35 +115,72 @@ function toFile( specifData, opts ) {
 //			file.content += '<item id="sect'+i+'" href="Text/sect'+i+'.xhtml" media-type="application/xhtml+xml" />'
 //		};
 //		console.debug( 'specifData.sections.length',file.sections.length);
+
+
+// Sections Title - Heading1
+
 		for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
-			file.content += ' '+specifData.hierarchies[h].title;			//paragraphOf( specifData.hierarchies[h], 1 )
+//			file.content += ' '+specifData.hierarchies[h].title;			//paragraphOf( specifData.hierarchies[h], 1 )
+			file.content += '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
+                +        '<w:pPr>'
+                +            '<w:pStyle w:val="berschrift1" />'
+				+				'<w:rPr>'
+                +                '<w:lang w:val="en-US" />'
+                +            '</w:rPr>'
+                +        '</w:pPr>'
+                +        '<w:r w:rsidRPr="00997056">'
+				+            '<w:t>'+specifData.hierarchies[h].title+'</w:t>'
+                +        '</w:r>'
+                +    '</w:p>'
 			
+			
+						
 //			for ( var k=0,K= specifData.hierarchies.node.length;k<K; k++) {
 //				file.content += ' '+specifData.hierarchies.node[k].id;
 //			}		
 						
-		};
+		}
+
+// Sections ID - Normaler Text
+
+		for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
+//			file.content += ' '+specifData.hierarchies[h].id+' ';
+  			file.content += '	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
++	'	                        <w:pPr>	'
++	'	                            <w:rPr>	'
++	'	                                <w:lang w:val="en-US" />	'
++	'	                            </w:rPr>	'
++	'	                        </w:pPr>	'
++	'	                        <w:proofErr w:type="spellStart" />	'
++	'	                        <w:r w:rsidRPr="002676EC">	'
++	'	                            <w:rPr>	'
++	'	                                <w:lang w:val="en-US" />	'
++	'	                            </w:rPr>	'
++	'	                            <w:t>SpecIF-'+specifData.hierarchies[h].id+'</w:t>	'
+//+ 	'								<w:t>testtext</w:t>'
++	'	                        </w:r>	'
++	'	                        <w:proofErr w:type="spellEnd" />	'
++	'	                        <w:bookmarkStart w:id="0" w:name="_GoBack" />	'
++	'	                        <w:bookmarkEnd w:id="0" />	'
++	'	                    </w:p>	'
+		}
 		
-		
-		
-		for( i=0,I=file.headings.length; i<I; i++ ) {			// file.headings.length = 0 -> wird nicht ausgeführt		
+/*		// file.headings.length = 0 -> wird nicht ausgeführt
+		for( i=0,I=file.headings.length; i<I; i++ ) {					
 				file.content += 	'<navPoint id="tocHd'+i+'" playOrder="'+(i+1)+'">'
 		//		+				'<navLabel><text>'+file.headings[i].title+'</text></navLabel>'
 		//		+				'<content src="Text/sect'+file.headings[i].section+'.xhtml#'+file.headings[i].id+'"/>'
 		//		+			'</navPoint>'
 		};
-
+*/
+		
+			
 		let t=file.sections.length; 
 			file.content += file.sections[t-1];
 			console.debug('fileSections',file.sections[t-1]);
 
 // Dokument-Ende			
-file.content += '</w:t>	'
-+	'	                        </w:r>	'
-+	'	                        <w:bookmarkStart w:id="0" w:name="_GoBack" />	'
-+	'	                        <w:bookmarkEnd w:id="0" />	'
-+	'	                    </w:p>	'
-+	'	                    <w:sectPr w:rsidR="00932176" w:rsidRPr="00F717F9">	'
+file.content += '               <w:sectPr w:rsidR="00932176" w:rsidRPr="00F717F9">	'
 +	'	                        <w:pgSz w:w="11906" w:h="16838" />	'
 +	'	                        <w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0" />	'
 +	'	                        <w:cols w:space="708" />	'

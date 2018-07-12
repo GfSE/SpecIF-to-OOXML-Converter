@@ -111,7 +111,29 @@ function pushHeading( t, pars ) {
 		if( ic==undefined ) ic = '';
 		if( ic ) ic += '&#160;'; // non-breakable space
 		let ti = titleValOf( r, rC, opts );
-		if( !pars || pars.level<1 ) return (ti?ic+ti:'');  // Rückgabe als Rohtext
+//		if( !pars || pars.level<1 ) return (ti?ic+ti:'');  // Rückgabe als Rohtext
+if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
++	'	                        <w:pPr>	'
++	'	                            <w:rPr>	'
++	'	                                <w:lang w:val="en-US" />	'
++	'	                            </w:rPr>	'
++	'	                        </w:pPr>	'
++	'	                        <w:proofErr w:type="spellStart" />	'
++	'	                        <w:r w:rsidRPr="002676EC">	'
++	'	                            <w:rPr>	'
++	'	                                <w:lang w:val="en-US" />	'
++	'	                            </w:rPr>	'
++	'	                            <w:t>'+(ti?ic+ti:'')+'</w:t>	'
++	'	                        </w:r>	'
++	'	                        <w:r w:rsidR="00997056">	'
++	'	                            <w:rPr>	'
++	'	                                <w:lang w:val="en-US" />	'
++	'	                            </w:rPr>	'
++	'	                            <w:t>Standard</w:t>	'
++	'	                        </w:r>	'
++	'	                        <w:proofErr w:type="spellEnd" />	'
++	'	                    </w:p>	'
+
 		// andernfalls Rückgabe als Kapitelüberschrift:
 		let h = rC.isHeading?2:3;
 //		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
@@ -504,18 +526,20 @@ function pushHeading( t, pars ) {
 		// make a ooxml file from the content provided,
 		// this is the frame of the file:
 //		console.debug( 'ooxmlOf secID', sectId )
-//		console.debug( 'ooxmlOf secTitle', sectTitle )
+		console.debug( 'ooxmlOf secTitle', sectTitle )
 //		console.debug( 'ooxmlOf body', body )
 		
 
 		let v1 = sectId?' id="'+sectId+'"':'';
-//		console.debug( 'ooxmlOf v1', v1 )
-		let v2 = sectTitle?	'<h1'+v1+'>'+sectTitle+'</h1>' : '';
+		console.debug( 'ooxmlOf v1', v1 )
+//		let v2 = sectTitle?	'<h1'+v1+'>'+sectTitle+'</h1>' : '';
 //		console.debug( 'ooxmlOf v2', v2 )
 		let v3 = body? body:'';
 //		console.debug( 'ooxmlOf v3', v3 )
-		return 		(v1)		//prüft auf vorhandene Kapitelüberschrift
-			+				(v3)
+		console.debug( 'v1+v3', v1 + v3 )
+//		return 		(v1)		//prüft auf vorhandene Kapitelüberschrift
+//			+				(v3)
+		return (v3)
 		}
 
 
