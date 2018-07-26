@@ -231,7 +231,7 @@ function toXhtml( specifData, opts ) {
 		for( a=0,A=r.properties.length; a<A; a++ ) {
 			rt = r.properties[a].title;
 			hPi = indexBy(opts.hiddenProperties,'title',rt);
-//			console.debug('hPi',hPi,rt,r.properties[a].value);
+			console.debug('hPi',hPi,rt,r.properties[a].value);
 			if( opts.hideEmptyProperties && isEmpty(r.properties[a].value)
 				|| hPi>-1 && ( opts.hiddenProperties[hPi].value==undefined || opts.hiddenProperties[hPi].value==r.properties[a].value )
 				|| opts.headingProperties.indexOf(rt)>-1

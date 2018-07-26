@@ -74,7 +74,7 @@ function toOoxml( specifData, opts ) {
 		)
 	};
 
-    console.debug('ooxmlinhalt',ooxml);
+//    console.debug('ooxmlinhalt',ooxml);
 	return ooxml
 	
 function pushHeading( t, pars ) {
@@ -96,8 +96,6 @@ function pushHeading( t, pars ) {
 				rC.isHeading = rC.isHeading || opts.headingProperties.indexOf(pr.title)>-1;
 				if( opts.headingProperties.indexOf(pr.title)>-1
 					|| opts.titleProperties.indexOf(pr.title)>-1 ) {
-//						console.debug('prTitle',pr.title);
-//						console.debug('prValue',pr.value);
 						return pr.value
 				}
 			}
@@ -196,6 +194,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 				ct += '</td></tr>'
 			}
 		};
+//		console.debug('ct',ct);
 		return ct + '</tbody></table>'
 	}
 	function anchorOf( res ) {
@@ -209,7 +208,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 			if( specifData.hierarchies[y].nodes )
 				for( n=0, N=specifData.hierarchies[y].nodes.length; n<N; n++ ) {
 					ndId = ndByRef( specifData.hierarchies[y].nodes[n] );
-	//				console.debug('ndId',n,ndId);
+//					console.debug('ndId',n,ndId);
 					if( ndId ) return ndId		// return node id
 				}
 		};
@@ -241,6 +240,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 			if( r.properties[a].value
 				&& opts.descriptionProperties.indexOf(rt)>-1 ) {
 				c1 += valOf( r.properties[a] )
+//				console.debug('valOfProp',c1);
 			}
 		};
 		// Skip the remaining properties, if no label is provided:
@@ -250,20 +250,51 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 		for( a=0,A=r.properties.length; a<A; a++ ) {
 			rt = r.properties[a].title;
 			hPi = indexBy(opts.hiddenProperties,'title',rt);
-//			console.debug('hPi',hPi,rt,r.properties[a].value);
+//			console.debug('hPi',hPi);
+//			console.debug('rt',rt);
+//			console.debug('propVal',r.properties[a].value);
 			if( opts.hideEmptyProperties && isEmpty(r.properties[a].value)
 				|| hPi>-1 && ( opts.hiddenProperties[hPi].value==undefined || opts.hiddenProperties[hPi].value==r.properties[a].value )
 				|| opts.headingProperties.indexOf(rt)>-1
 				|| opts.titleProperties.indexOf(rt)>-1 
 				|| opts.descriptionProperties.indexOf(rt)>-1 ) continue;
-			c2 += '<tr><td class="propertyTitle">'+rt+'</td><td>'+valOf( r.properties[a] )+'</td></tr>'
+//			c2 += '<tr><td class="propertyTitle">'+rt+'</td><td>'+valOf( r.properties[a] )+'</td></tr>'
+// 			Innere Tabelle
+			c2 += '<w:tr w:rsidR="00E266C5" w:rsidTr="00E35BF5">'			//Zeilenanfang der Tabelle
+				+			'<w:tc>'
+				+				'<w:tcPr>'
+				+					'<w:tcW w:w="4531" w:type="dxa"/>'
+				+				'</w:tcPr>'
+				+				'<w:p w:rsidR="00E266C5" w:rsidRDefault="000E6D0F" w:rsidP="00E35BF5">'		//1. Spalte
+				+					'<w:r><w:t>'+rt+'</w:t></w:r></w:p></w:tc>'
+				+				'<w:tc>'																	//2. Spalte
+				+				'<w:tcPr>'
+				+					'<w:tcW w:w="4531" w:type="dxa"/>'
+				+				'</w:tcPr>'
+				+				'<w:p w:rsidR="00E266C5" w:rsidRDefault="00E266C5" w:rsidP="00E35BF5">'
+				+				'<w:r>'
+				+					'<w:t>'+valOf( r.properties[a] )+'</w:t></w:r></w:p></w:tc>'
+				+	'</w:tr>'
+//				console.debug('propertyTable',c2);
 		};
 		if( !c2 ) return c1;
-		return c1+'<p class="metaTitle">'+opts.propertiesLabel+'</p><table class="propertyTable"><tbody>'+c2+'</tbody></table>'
+		return c1+'<w:p w:rsidR="00E266C5" w:rsidRDefault="00E266C5">'
+			+			'<w:r>'
+			+				'<w:t>'+opts.propertiesLabel+'</w:t>'
+			+			'</w:r>'
+			+		'</w:p>'
+			+		'<w:tbl>'
+			+			'<w:tblPr>'
+			+				'<w:tblStyle w:val="Tabellenraster"/>'
+			+				'<w:tblW w:w="0" w:type="auto"/>'
+			+				'<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>'
+			+			'</w:tblPr>'+c2+'</w:tbl>'
 
 		// ---------------
 		function isEmpty( str ) {
 			// checks whether str has content or a file reference:
+			
+//			console.debug('str',str);
 			return str.replace(/<[^>]+>/g, '').trim().length<1	// strip HTML and trim
 				&& !/<object[^>]+(\/>|>[\s\S]*?<\/object>)/.test(str)
 				&& !/<img[^>]+(\/>|>[\s\S]*?<\/img>)/.test(str)
@@ -318,7 +349,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 				}
 
 			// Prepare a file reference for viewing and editing:
-	//		console.debug('fromServer 0: ', txt);
+//			console.debug('fromServer 0: ', txt);
 				
 			// 1. transform two nested objects to link+object resp. link+image:
 			//    Especially OLE-Objects from DOORS are coming in this format; the outer object is the OLE, the inner is the preview image.
@@ -344,10 +375,11 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 						u2 = getUrl( $2 ), 				// the preview image
 //						s2 = getStyle( $2 ), 
 						t2 = getType( $2 );
-
+					
 					// If there is no description, use the name of the link target:
 					if( !$4 ) {
 						$4 = u1;   // $4 is now the description between object tags
+
 					};
 					
 					// if the type is svg, png is preferred and available, replace it:
@@ -356,14 +388,14 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 						u2 = png.id.replace('\\','/');
 						t2 = png.mimeType
 					} 
-					
+
 					pushReferencedFiles( u2, t2 );
-	//				console.debug( $0, $4, u1, t1, u2, t2 );
+//					console.debug( $0, $4, u1, t1, u2, t2 );
 					return'<img src="'+addEpubPath(u2)+'" style="max-width:100%" alt="'+$4+'" />'
 //					return'<div class="forImage"><object data="'+addEpubPath(u2)+'"'+t2+s2+' >'+$4+'</object></div>'
 				}
 			);
-	//		console.debug('fromServer 1: ', txt);
+//			console.debug('fromServer 1: ', txt);
 				
 			// 2. transform a single object to link+object resp. link+image:
 			//      For example, the ARCWAY Cockpit export uses this pattern:
@@ -386,7 +418,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 						
 //					let hasImg = true;
 					e = e.toLowerCase();
-	//				console.debug( $0, $1, 'url: ', u1, 'ext: ', e );
+//					console.debug( $0, $1, 'url: ', u1, 'ext: ', e );
 						
 					let png = itemById( specifData.files, fileName(u1)+'.png' );
 					if( opts.imgExtensions.indexOf( e )>-1 ) {  
@@ -418,12 +450,46 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 //					if( hasImg )
 //						return '<span class="forImage">'+d+'</span>'
 //					else
+	
+//					console.debug('d',d);
 						return d
 				}
-			);	
-	//		console.debug('fileRef result: ', txt);
+			);
+/*
+Beispieltext 
+<div><p> blabla1 </p><p class="inline-label"> blabla2 </p><div class="forImage" style="max-width: 600px;"> <img src="undefined5a4755dd0000bca801375293a62c90a8.svg" style="max-width:100%" alt="5a4755dd0000bca801375293a62c90a8.svg" /></div></div>
+<1		>		<	2						>		  <3												>																																<4			>
+1 <w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>
+2 </w:t></w:r></w:p><w:p w:rsidRDefault="00D36822" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>
+3 <\/p>[\s\S]*?<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?><img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>
+</w:t>
+4 </div>[\s\S]*?</div>
+</w:r></w:p>
+*/
+
+
+			txt = txt.replace(/<div><p>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			txt = txt.replace(/<\/p><p class="inline-label">/g,'</w:t></w:r></w:p><w:p w:rsidRDefault="00D36822" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			txt = txt.replace(/<div><p class="inline-label">/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			txt = txt.replace(/<\/p>[\s\S]*?<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>/g,'</w:t>');
+			txt = txt.replace(/<img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>/g,'');
+			txt = txt.replace(/<\/div>[\s\S]*?<\/div>/g,'</w:r></w:p>');
+			txt = txt.replace(/<div><p class="inline-label">/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			txt = txt.replace(/<div> <p> <br \/><br \/> <br \/> <\/p><p>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			//ab hier wird der Into Text abgearbeitet
+			txt = txt.replace(/<\/p><ul> <li>/g,'</w:t></w:r></w:p><w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
+			txt = txt.replace(/<\/li> <li>/g,'</w:t></w:r></w:p><w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
+			txt = txt.replace(/<\/li><\/ul><p><\/p><p>/g,'</w:t></w:r></w:p><w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			txt = txt.replace(/<\/p><p><\/p><p>/g,'');
+			txt = txt.replace(/<\/li><\/ul><p>/g,'</w:t></w:r></w:p><w:p w:rsidRDefault="00F717F9"' 
+			+ 'w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+//			console.debug('fileRef result: ', txt);
+			
+			
 			return txt
 		}
+		
+		
 		function titleLinks( str, opts ) {
 			// Transform sub-strings with dynamic linking pattern to internal links.
 			// Syntax:
@@ -515,7 +581,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 			rC = itemById( specifData[rClasses], r[rClass] );			// suche Klasse des referenzierten Objekts - resourceClass
 			params.nodeId = nd.nodes[i].id;
 			ch += 	titleOf( r, rC, params, opts )
-//				+	propertiesOf( r, rC, opts )
+ 				+	propertiesOf( r, rC, opts )
 //				+	statementsOf( r, opts )
 				+	paragraphOf( nd.nodes[i], lvl+1 )					// rekursiv für den Unterbaum - Chapter
 		};
@@ -525,20 +591,8 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 	function ooxmlOf( sectId, sectTitle, body ) {
 		// make a ooxml file from the content provided,
 		// this is the frame of the file:
-//		console.debug( 'ooxmlOf secID', sectId )
-		console.debug( 'ooxmlOf secTitle', sectTitle )
-//		console.debug( 'ooxmlOf body', body )
-		
-
 		let v1 = sectId?' id="'+sectId+'"':'';
-		console.debug( 'ooxmlOf v1', v1 )
-//		let v2 = sectTitle?	'<h1'+v1+'>'+sectTitle+'</h1>' : '';
-//		console.debug( 'ooxmlOf v2', v2 )
 		let v3 = body? body:'';
-//		console.debug( 'ooxmlOf v3', v3 )
-		console.debug( 'v1+v3', v1 + v3 )
-//		return 		(v1)		//prüft auf vorhandene Kapitelüberschrift
-//			+				(v3)
 		return (v3)
 		}
 
