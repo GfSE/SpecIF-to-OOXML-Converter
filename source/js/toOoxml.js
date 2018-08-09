@@ -178,7 +178,7 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 				for( i=0, I=sts[cid].subjects.length; i<I; i++ ) {
 					r2 = sts[cid].subjects[i];
 	//				console.debug('r2',r2,itemById( specifData[rClasses], r2[rClass]))
-					ct += '<a href="'+anchorOf( r2 )+'">'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</a><br/>'
+					ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%<br/>'
 				};
 				ct += '</td><td class="statementTitle">'+cl.title;
 				ct += '</td><td>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
@@ -456,36 +456,70 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 				}
 			);
 /*
-Beispieltext 
-<div><p> blabla1 </p><p class="inline-label"> blabla2 </p><div class="forImage" style="max-width: 600px;"> <img src="undefined5a4755dd0000bca801375293a62c90a8.svg" style="max-width:100%" alt="5a4755dd0000bca801375293a62c90a8.svg" /></div></div>
-<1		>		<	2						>		  <3												>																																<4			>
-1 <w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>
-2 </w:t></w:r></w:p><w:p w:rsidRDefault="00D36822" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>
-3 <\/p>[\s\S]*?<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?><img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>
-</w:t>
-4 </div>[\s\S]*?</div>
-</w:r></w:p>
+ 
+Recoginze the following html tags and replace them to see differences and remainig tags better
+<p></p>             ->      %abs% %/abs%
+<div></div>         ->      %cont% %/cont%
+<li></li>           ->      %lst% %/lst%
+<ul></ul>           ->      %ulst% %ulst%
+<th></th>           ->      %tkpf% %/tkpf%
+<tr></tr>           ->      %trei% %/trei%
+<td></td>           ->      %tzel% %/tzel%
+<table></table>     ->      %tab% %/tab%
+<tbody></tbody>     ->      %tkoe% %/tkoe%
+<img([\s\S]+?)>     ->      %img%
+<a
+
+
+
+txt = txt.replace(/<p[\s\S]*?>/g,'%abs%');         txt = txt.replace(/<\/p>/g,'%/abs%');
+txt = txt.replace(/<div[\s\S]*?>/g,'%cont%');      txt = txt.replace(/<\/div>/g,'%/cont%');
+txt = txt.replace(/<li>/g,'%lst%');                txt = txt.replace(/<\/li>/g,'%/lst%');
+txt = txt.replace(/<ul>/g,'%ulst%');               txt = txt.replace(/<\/ul>/g,'%/ulst%');
+txt = txt.replace(/<th>/g,'%tkpf%');               txt = txt.replace(/<\/th>/g,'%/tkpf%');
+txt = txt.replace(/<tr>/g,'%trei%');               txt = txt.replace(/<\/tr>/g,'%/trei%');
+txt = txt.replace(/<td>/g,'%tzel%');               txt = txt.replace(/<\/td>/g,'%/tzel%');
+txt = txt.replace(/<table[\s\S]*?>/g,'%tab%');     txt = txt.replace(/<\/table>/g,'%/tab%');
+txt = txt.replace(/<tbody>/g,'%tkoe%');            txt = txt.replace(/<\/tbody>/g,'%/tkoe%');
+txt = txt.replace(/<img([\s\S]+?)>/g,'%img%');
+
 */
 
+// Bilder werden vorerst entfernt
+txt = txt.replace(/<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>[\s]*<img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>[\s]*<\/div>/g,''); 
+txt = txt.replace(/<img[\s\S]+?>/g,'');
+// leere Container entfernen
+txt = txt.replace(/<div> <\/div>|<div\/>/g,'');
+// alle Container <div> / </div> entfernen
+txt = txt.replace(/<div>|<\/div>/g,'');
+// alle Zeilen umwandeln
+txt = txt.replace(/<p\/>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t/></w:r></w:p>');
+txt = txt.replace(/<p[\s\S]*?>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+// hiermit wird <p>, <p class xxx> gefunden und ersetzt
+txt = txt.replace(/<\/p>/g,'</w:t></w:r></w:p>');
+// Aufzählungen filtern und umwandeln
+txt = txt.replace(/<ul>|<\/ul>/g,'');
+txt = txt.replace(/<li>/g,'<w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
+txt = txt.replace(/<\/li>/g,'</w:t></w:r></w:p>');
+// Leerzeilen entfernen
+txt = txt.replace(/<br \/>/g,'');
 
-			txt = txt.replace(/<div><p>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-			txt = txt.replace(/<\/p><p class="inline-label">/g,'</w:t></w:r></w:p><w:p w:rsidRDefault="00D36822" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-			txt = txt.replace(/<div><p class="inline-label">/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-			txt = txt.replace(/<\/p>[\s\S]*?<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>/g,'</w:t>');
-			txt = txt.replace(/<img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>/g,'');
-			txt = txt.replace(/<\/div>[\s\S]*?<\/div>/g,'</w:r></w:p>');
-			txt = txt.replace(/<div><p class="inline-label">/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-			txt = txt.replace(/<div> <p> <br \/><br \/> <br \/> <\/p><p>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-			//ab hier wird der Into Text abgearbeitet
-			txt = txt.replace(/<\/p><ul> <li>/g,'</w:t></w:r></w:p><w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
-			txt = txt.replace(/<\/li> <li>/g,'</w:t></w:r></w:p><w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
-			txt = txt.replace(/<\/li><\/ul><p><\/p><p>/g,'</w:t></w:r></w:p><w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-			txt = txt.replace(/<\/p><p><\/p><p>/g,'');
-			txt = txt.replace(/<\/li><\/ul><p>/g,'</w:t></w:r></w:p><w:p w:rsidRDefault="00F717F9"' 
-			+ 'w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+// Tabellen umwandeln
+// head
+txt = txt.replace(/<table class="stdInlineWithBorder"> <tbody>/g,'<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>');
+// Tabellenkopf
+txt = txt.replace(/<th>/g,'<w:tc><w:tcPr><w:tcW w:w="2265" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRPr="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:pPr><w:rPr><w:b/></w:rPr></w:pPr><w:r w:rsidRPr="006438EE"><w:rPr><w:b/></w:rPr><w:t>');
+txt = txt.replace(/<\/th>/g,'</w:t></w:r></w:p></w:tc>');
+// Zeilen
+txt = txt.replace(/<tr>/g,'<w:tr w:rsidR="006438EE" w:rsidTr="006438EE">');
+txt = txt.replace(/<\/tr>/g,'</w:tr>');
+// Felder
+txt = txt.replace(/<td>/g,'<w:tc><w:tcPr><w:tcW w:w="2266" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>');
+txt = txt.replace(/<\/td>/g,'</w:t></w:r></w:p></w:tc>');
+// tail
+txt = txt.replace(/<\/tbody><\/table>/g,'</w:tbl>');
+		
 //			console.debug('fileRef result: ', txt);
-			
-			
 			return txt
 		}
 		
@@ -530,7 +564,7 @@ Beispieltext
 							if( !ti || ti.length<opts.titleLinkMinLength ) continue;
 
 							// if the titleLink content equals a resource's title, replace it with a link:
-							if(m==ti.toLowerCase()) return '<a href="'+anchorOf(cO)+'">'+$1+'</a>'
+							if(m==ti.toLowerCase()) return '%%a href="'+anchorOf(cO)+'"%%'+$1+'%%/a%%'							
 						};
 						// The dynamic link has NOT been matched/replaced, so mark it:
 						return '<span style="color:#D82020">'+$1+'</span>'
