@@ -109,29 +109,29 @@ function pushHeading( t, pars ) {
 		if( ic==undefined ) ic = '';
 		if( ic ) ic += '&#160;'; // non-breakable space
 		let ti = titleValOf( r, rC, opts );
-//		if( !pars || pars.level<1 ) return (ti?ic+ti:'');  // Rückgabe als Rohtext
-if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
-+	'	                        <w:pPr>	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                        </w:pPr>	'
-+	'	                        <w:proofErr w:type="spellStart" />	'
-+	'	                        <w:r w:rsidRPr="002676EC">	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                            <w:t>'+(ti?ic+ti:'')+'</w:t>	'
-+	'	                        </w:r>	'
-+	'	                        <w:r w:rsidR="00997056">	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                            <w:t>Standard</w:t>	'
-+	'	                        </w:r>	'
-+	'	                        <w:proofErr w:type="spellEnd" />	'
-+	'	                    </w:p>	'
-
+		if( !pars || pars.level<1 ) return  (ti?ic+ti:'');  // Rückgabe als Rohtext
+/*		if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
+		+	'	                        <w:pPr>	'
+		+	'	                            <w:rPr>	'
+		+	'	                                <w:lang w:val="en-US" />	'
+		+	'	                            </w:rPr>	'
+		+	'	                        </w:pPr>	'
+		+	'	                        <w:proofErr w:type="spellStart" />	'
+		+	'	                        <w:r w:rsidRPr="002676EC">	'
+		+	'	                            <w:rPr>	'
+		+	'	                                <w:lang w:val="en-US" />	'
+		+	'	                            </w:rPr>	'
+		+	'	                            <w:t>'+(ti?ic+ti:'')+'</w:t>	'
+		+	'	                        </w:r>	'
+		+	'	                        <w:r w:rsidR="00997056">	'
+		+	'	                            <w:rPr>	'
+		+	'	                                <w:lang w:val="en-US" />	'
+		+	'	                            </w:rPr>	'
+		+	'	                            <w:t>Standard</w:t>	'
+		+	'	                        </w:r>	'
+		+	'	                        <w:proofErr w:type="spellEnd" />	'
+		+	'	                    </w:p>	'
+*/
 		// andernfalls Rückgabe als Kapitelüberschrift:
 		let h = rC.isHeading?2:3;
 //		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
@@ -167,43 +167,49 @@ if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002
 //		console.debug( 'statements', r.title, sts );
 //		if( Object.keys(sts).length<1 ) return '';
 		if( noSts ) return '';
-		ct = '<p class="metaTitle">'+opts.statementsLabel+'</p>';
-		ct += '<table class="statementTable"><tbody>';
+		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
+		ct += '<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid><w:gridCol w:w="3020"/><w:gridCol w:w="3021"/><w:gridCol w:w="3021"/></w:tblGrid>';
 		for( cid in sts ) {
 			// we don't have (and don't need) the individual statement, just the class:
 			cl = itemById(specifData[sClasses],cid);   // Suche die Klasse der betreffenden Relation
-			// table with 3 columns:
+			// table with 3 columns:		
 			if( sts[cid].subjects.length>0 ) {
-				ct += '<tr><td>';
+				ct += '<w:tr w:rsidR="006438EE" w:rsidTr="006438EE"><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>';
 				for( i=0, I=sts[cid].subjects.length; i<I; i++ ) {
 					r2 = sts[cid].subjects[i];
 	//				console.debug('r2',r2,itemById( specifData[rClasses], r2[rClass]))
-					ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%<br/>'
+	//				ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%%%br/%%'
+					ct += titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
 				};
-				ct += '</td><td class="statementTitle">'+cl.title;
-				ct += '</td><td>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
-				ct += '</td></tr>'
+				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title;
+				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
+				ct += '</w:t></w:r></w:p></w:tc></w:tr>'
 			};
 			if( sts[cid].objects.length>0 ) {
-				ct += '<tr><td>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
-				ct += '</td><td class="statementTitle">'+cl.title+'</td><td>';
+				ct += '<w:tr w:rsidR="006438EE" w:rsidTr="006438EE"><w:tc><w:tcPr><w:tcW w:w="2929" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
+				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title+'</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="2266" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>';
 				for( i=0, I=sts[cid].objects.length; i<I; i++ ) {
 					r2 = sts[cid].objects[i];
-					ct += '<a href="'+anchorOf( r2 )+'">'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</a><br/>'
+	//				ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%%%br/%%'
+					ct += titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
 				};
-				ct += '</td></tr>'
+				ct += '</w:t></w:r></w:p></w:tc></w:tr>'
 			}
+			
 		};
+		
 //		console.debug('ct',ct);
-		return ct + '</tbody></table>'
+		return ct + '</w:tbl>'
+		
 	}
+	
 	function anchorOf( res ) {
 		// Find the hierarchy node id for a given resource;
 		// the first occurrence is returned:
 		let m=null, M=null, y=null, n=null, N=null, ndId=null;
 		for( m=0, M=specifData.hierarchies.length; m<M; m++ ) {
 			// for all hierarchies starting with the current one 'h':
-			y = (m+h) % M;  
+			y = (m+h) % M; 
 //			console.debug( 'nodes', m, y, specifData.hierarchies );
 			if( specifData.hierarchies[y].nodes )
 				for( n=0, N=specifData.hierarchies[y].nodes.length; n<N; n++ ) {
@@ -532,7 +538,7 @@ txt = txt.replace(/<\/tbody><\/table>/g,'</w:tbl>');
 			// - Titles shorter than 4 characters are ignored
 			// - see: https://www.mediawiki.org/wiki/Help:Links
 
-//			console.log('*',opts.RETitleLink,str);
+//			console.debug('*',opts.RETitleLink,str);
 			
 			// in certain situations, remove the dynamic linking pattern from the text:
 			if( !opts.addTitleLinks )
@@ -559,15 +565,30 @@ txt = txt.replace(/<\/tbody><\/table>/g,'</w:tbl>');
 
 							// get the pure title text:
 							ti = titleValOf( cO, itemById( specifData[rClasses], cO[rClass] ), opts );
-
+							//	console.debug('title',ti);
+							
 							// disregard objects whose title is too short:
 							if( !ti || ti.length<opts.titleLinkMinLength ) continue;
 
 							// if the titleLink content equals a resource's title, replace it with a link:
-							if(m==ti.toLowerCase()) return '%%a href="'+anchorOf(cO)+'"%%'+$1+'%%/a%%'							
-						};
+//							console.debug('anchorOf(cO)',anchorOf(cO));
+//							if(m==ti.toLowerCase()) return '%%a href="'+anchorOf(cO)+'"%%'+$1+'%%/a%%'
+							if(m==ti.toLowerCase()) return '</w:t></w:r><w:r w:rsidR="009C59AE"><w:t xml:space="preserve"> </w:t></w:r>'
+															+'<w:hyperlink w:anchor="_'+$1+'" w:history="1"><w:r w:rsidRPr="000E1FEF"><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'
+															+$1
+															+'</w:t></w:r></w:hyperlink><w:r w:rsidR="00D06029"><w:t>'
+							/* link incomplete at the moment
+							
+							need to mark the heading with
+							<w:bookmarkStart w:id="1" w:name="_HEADING"/>
+							<w:bookmarkEnd w:id="1"/>
+							<w:r w:rsidRPr="00997056">
+								<w:t>HEADING</w:t>
+							<w:bookmarkEnd w:id="0"/>	
+							*/
+							};
 						// The dynamic link has NOT been matched/replaced, so mark it:
-						return '<span style="color:#D82020">'+$1+'</span>'
+						return '</w:t></w:r><w:p w:rsidR="00C00F3A" w:rsidRPr="00B43A41" w:rsidRDefault="00C00F3A" w:rsidP="00222307"><w:pPr><w:rPr><w:color w:val="FF0000"/></w:rPr></w:pPr><w:r w:rsidRPr="00B43A41"><w:rPr><w:color w:val="FF0000"/></w:rPr><w:t>'+$1+'</w:t></w:r>'
 					}
 				)
 			} while( replaced );
@@ -616,7 +637,7 @@ txt = txt.replace(/<\/tbody><\/table>/g,'</w:tbl>');
 			params.nodeId = nd.nodes[i].id;
 			ch += 	titleOf( r, rC, params, opts )
  				+	propertiesOf( r, rC, opts )
-//				+	statementsOf( r, opts )
+				+	statementsOf( r, opts )
 				+	paragraphOf( nd.nodes[i], lvl+1 )					// rekursiv für den Unterbaum - Chapter
 		};
 //		console.debug( 'ch', ch )
