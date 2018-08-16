@@ -50,7 +50,6 @@ function toOoxml( specifData, opts ) {
 			sections: [],		// a xhtml file per SpecIF hierarchy
 			images: []
 		};
-	
 	// The first section is a xhtml-file with the title page:
 	ooxml.sections.push(
 		ooxmlOf( 
@@ -60,6 +59,9 @@ function toOoxml( specifData, opts ) {
 		)
 		
 	)
+	
+	var testt = 0;
+	
 //	console.debug('sections push',ooxml.sections.push);
 	
 	// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
@@ -96,6 +98,7 @@ function pushHeading( t, pars ) {
 				rC.isHeading = rC.isHeading || opts.headingProperties.indexOf(pr.title)>-1;
 				if( opts.headingProperties.indexOf(pr.title)>-1
 					|| opts.titleProperties.indexOf(pr.title)>-1 ) {
+						
 						return pr.value
 				}
 			}
@@ -135,10 +138,14 @@ function pushHeading( t, pars ) {
 		// andernfalls Rückgabe als Kapitelüberschrift:
 		let h = rC.isHeading?2:3;
 //		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
+		testt++;
+		console.debug('testt',testt);
 		return '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
                 +        '<w:pPr>'
                 +            '<w:pStyle w:val="berschrift'+h+'" />'
                 +        '</w:pPr>'
+				+		 '<w:bookmarkStart w:id="'+(testt-1)+'" w:name="_'+(ti?ic+ti:'')+'"/>'
+				+		 '<w:bookmarkEnd w:id="'+(testt-1)+'"/>'
                 +        '<w:r w:rsidRPr="00997056">'
 //              +            '<w:t>'+h+' id="'+pars.nodeId+'" '+(ti?ic+ti:'')+'</w:t>'
 				+            '<w:t>'+(ti?ic+ti:'')+'</w:t>'
