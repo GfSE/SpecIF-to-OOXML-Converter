@@ -50,6 +50,9 @@ function toOoxml( specifData, opts ) {
 			sections: [],		// a xhtml file per SpecIF hierarchy
 			images: []
 		};
+	
+	var hyperlinkID = 0;
+	
 	// The first section is a xhtml-file with the title page:
 	ooxml.sections.push(
 		ooxmlOf( 
@@ -59,9 +62,6 @@ function toOoxml( specifData, opts ) {
 		)
 		
 	)
-	
-	var testt = 0;
-	
 //	console.debug('sections push',ooxml.sections.push);
 	
 	// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
@@ -98,7 +98,6 @@ function pushHeading( t, pars ) {
 				rC.isHeading = rC.isHeading || opts.headingProperties.indexOf(pr.title)>-1;
 				if( opts.headingProperties.indexOf(pr.title)>-1
 					|| opts.titleProperties.indexOf(pr.title)>-1 ) {
-						
 						return pr.value
 				}
 			}
@@ -135,24 +134,26 @@ function pushHeading( t, pars ) {
 		+	'	                        <w:proofErr w:type="spellEnd" />	'
 		+	'	                    </w:p>	'
 */
-		// andernfalls Rückgabe als Kapitelüberschrift:
+
+// andernfalls Rückgabe als Kapitelüberschrift:
 		let h = rC.isHeading?2:3;
 //		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
-		testt++;
-		console.debug('testt',testt);
+		hyperlinkID++;
+//		console.debug('hyperlinkID',hyperlinkID);
 		return '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
                 +        '<w:pPr>'
                 +            '<w:pStyle w:val="berschrift'+h+'" />'
                 +        '</w:pPr>'
-				+		 '<w:bookmarkStart w:id="'+(testt-1)+'" w:name="_'+(ti?ic+ti:'')+'"/>'
-				+		 '<w:bookmarkEnd w:id="'+(testt-1)+'"/>'
+				+		 '<w:bookmarkStart w:id="'+(hyperlinkID-1)+'" w:name="_'+(ti?ic+ti:'')+'"/>'
+				+		 '<w:bookmarkEnd w:id="'+(hyperlinkID-1)+'"/>'
                 +        '<w:r w:rsidRPr="00997056">'
 //              +            '<w:t>'+h+' id="'+pars.nodeId+'" '+(ti?ic+ti:'')+'</w:t>'
 				+            '<w:t>'+(ti?ic+ti:'')+'</w:t>'
                 +        '</w:r>'
                 +    '</w:p>'
 
-	}
+	}	
+	
 	function statementsOf( r, opts ) {
 		if( !opts.statementsLabel ) return '';
 		let i, I, sts={}, st, cl, cid, oid, sid, ct='', r2, noSts=true;
@@ -174,7 +175,7 @@ function pushHeading( t, pars ) {
 //		console.debug( 'statements', r.title, sts );
 //		if( Object.keys(sts).length<1 ) return '';
 		if( noSts ) return '';
-		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
+/*		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
 		ct += '<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid><w:gridCol w:w="3020"/><w:gridCol w:w="3021"/><w:gridCol w:w="3021"/></w:tblGrid>';
 		for( cid in sts ) {
 			// we don't have (and don't need) the individual statement, just the class:
@@ -186,7 +187,7 @@ function pushHeading( t, pars ) {
 					r2 = sts[cid].subjects[i];
 	//				console.debug('r2',r2,itemById( specifData[rClasses], r2[rClass]))
 	//				ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%%%br/%%'
-					ct += titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
+					ct += '%hl% '+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+' %/hl%'+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
 				};
 				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title;
 				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
@@ -198,14 +199,55 @@ function pushHeading( t, pars ) {
 				for( i=0, I=sts[cid].objects.length; i<I; i++ ) {
 					r2 = sts[cid].objects[i];
 	//				ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%%%br/%%'
-					ct += titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
+					ct += '%hl% '+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+' %/hl%'+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
 				};
 				ct += '</w:t></w:r></w:p></w:tc></w:tr>'
 			}
+/*			ct = ct.replace( /((<w:p[\s\S]*?>)|(<w:p[\s\S]*?>))*(%hl% ([\s\S]*?) %\/hl%)(<\/w:t>[\s]*<\/w:r>[\s]*<\/w:p>)/g,   
+				function( $0, $1, $2, $3 , $4, $5) {
+					var s0 = $0
+					s0 = s0.replace(/
+					var s1 = $1
+					var s2 = $2
+					var s3 = $3
+					var s4 = $4
+					var s5 = $5
+					
+				}	
+*/
+
+		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
+		ct += '<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid><w:gridCol w:w="3020"/><w:gridCol w:w="3021"/><w:gridCol w:w="3021"/></w:tblGrid>';
+		for( cid in sts ) {
+			// we don't have (and don't need) the individual statement, just the class:
+			cl = itemById(specifData[sClasses],cid);
+
+			// 3 columns:
+			if( sts[cid].subjects.length>0 ) {
+				ct += '<w:tr w:rsidR="006438EE" w:rsidTr="006438EE"><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr>';
+				for( i=0, I=sts[cid].subjects.length; i<I; i++ ) {
+					r2 = sts[cid].subjects[i];
+	//				console.debug('r2',r2,itemById( specifData[rClasses], r2[rClass]))
+					ct += '<w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:hyperlink w:anchor="'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:hyperlink></w:p>';
+				};
+				ct += '</w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title+'</w:t></w:r></w:p></w:tc>';
+				ct += '<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts )+'</w:t></w:r></w:p></w:tc>';
+				ct += '</w:tr>'
+			};
+			
+			if( sts[cid].objects.length>0 ) {
+				ct += '<w:tr w:rsidR="006438EE" w:rsidTr="006438EE"><w:tc><w:tcPr><w:tcW w:w="2929" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts )+'</w:t></w:r></w:p></w:tc>';
+				ct += '<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title+'</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr>';
+				for( i=0, I=sts[cid].objects.length; i<I; i++ ) {
+					r2 = sts[cid].objects[i];
+					ct += '<w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:hyperlink w:anchor="'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:hyperlink></w:p>';
+				};
+				ct += '</w:tc></w:tr>'
+			}
 			
 		};
-		
-//		console.debug('ct',ct);
+			
+		console.debug('ct',ct);
 		return ct + '</w:tbl>'
 		
 	}
