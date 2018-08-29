@@ -144,7 +144,7 @@ function pushHeading( t, pars ) {
                 +        '<w:pPr>'
                 +            '<w:pStyle w:val="berschrift'+h+'" />'
                 +        '</w:pPr>'
-				+		 '<w:bookmarkStart w:id="'+(hyperlinkID-1)+'" w:name="_'+(ti?ic+ti:'')+'"/>'
+				+		 '<w:bookmarkStart w:id="'+(hyperlinkID-1)+'" w:name="_'+pars.nodeId+'"/>'
 				+		 '<w:bookmarkEnd w:id="'+(hyperlinkID-1)+'"/>'
                 +        '<w:r w:rsidRPr="00997056">'
 //              +            '<w:t>'+h+' id="'+pars.nodeId+'" '+(ti?ic+ti:'')+'</w:t>'
@@ -213,7 +213,9 @@ function pushHeading( t, pars ) {
 					var s4 = $4
 					var s5 = $5
 					
-				}	
+					}
+				)
+			)	
 */
 
 		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
@@ -228,7 +230,7 @@ function pushHeading( t, pars ) {
 				for( i=0, I=sts[cid].subjects.length; i<I; i++ ) {
 					r2 = sts[cid].subjects[i];
 	//				console.debug('r2',r2,itemById( specifData[rClasses], r2[rClass]))
-					ct += '<w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:hyperlink w:anchor="'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:hyperlink></w:p>';
+					ct += '<w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:hyperlink w:anchor="_'+anchorOf( r2 )+'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:hyperlink></w:p>';
 				};
 				ct += '</w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title+'</w:t></w:r></w:p></w:tc>';
 				ct += '<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts )+'</w:t></w:r></w:p></w:tc>';
@@ -240,14 +242,14 @@ function pushHeading( t, pars ) {
 				ct += '<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title+'</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr>';
 				for( i=0, I=sts[cid].objects.length; i<I; i++ ) {
 					r2 = sts[cid].objects[i];
-					ct += '<w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:hyperlink w:anchor="'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:hyperlink></w:p>';
+					ct += '<w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:hyperlink w:anchor="_'+anchorOf( r2 )+'"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'</w:t></w:r></w:hyperlink></w:p>';
 				};
 				ct += '</w:tc></w:tr>'
 			}
 			
 		};
 			
-		console.debug('ct',ct);
+//		console.debug('ct',ct);
 		return ct + '</w:tbl>'
 		
 	}
@@ -263,7 +265,7 @@ function pushHeading( t, pars ) {
 			if( specifData.hierarchies[y].nodes )
 				for( n=0, N=specifData.hierarchies[y].nodes.length; n<N; n++ ) {
 					ndId = ndByRef( specifData.hierarchies[y].nodes[n] );
-//					console.debug('ndId',n,ndId);
+					console.debug('ndId',n,ndId);
 					if( ndId ) return ndId		// return node id
 				}
 		};
@@ -271,7 +273,8 @@ function pushHeading( t, pars ) {
 		
 		function ndByRef( nd ) {
 			let ndId=null;
-			if( nd.resource==res.id ) return 'sect'+(y+firstHierarchySection)+'.xhtml#'+nd.id;  // fully qualified anchor including filename
+			if( nd.resource==res.id ) return nd.id;
+			//			if( nd.resource==res.id ) return 'sect'+(y+firstHierarchySection)+'.xhtml#'+nd.id;  // fully qualified anchor including filename
 			if( nd.nodes )
 				for( var t=0, T=nd.nodes.length; t<T; t++ ) {
 					ndId = ndByRef( nd.nodes[t] );
