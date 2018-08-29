@@ -546,6 +546,7 @@ txt = txt.replace(/<img([\s\S]+?)>/g,'%img%');
 // Bilder werden vorerst entfernt
 txt = txt.replace(/<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>[\s]*<img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>[\s]*<\/div>/g,''); 
 txt = txt.replace(/<img[\s\S]+?>/g,'');
+
 // leere Container entfernen
 txt = txt.replace(/<div> <\/div>|<div\/>/g,'');
 // alle Container <div> / </div> entfernen
