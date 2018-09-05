@@ -11,6 +11,8 @@
 	<script type="text/javascript" src="./js/toFile.js"></script>
 	<script type="text/javascript" src="./js/toOoxml.js"></script>
 	<script type="text/javascript" src="./test/specifData.js"></script>
+	<script type="text/javascript"> var imageIDcount = 7</script>
+	<script type="text/javascript"> var imageType=new Array()</script>
 </head>
 <body>
 <div id="main">
@@ -20,6 +22,7 @@
 (function() {
 	// the DOM is available now.
 	console.debug('start');
+//	console.debug('imageType',imageType);
 	var specif = specifData(),
 		options = { 
 			filePath: 'https://se.reqif.net/reqif/v0.92/projects/'+specif.id+'/rev/0/files',
@@ -30,8 +33,81 @@
 			propertiesLabel: 'Properties',
 			statementsLabel: 'Statements'
 		};
-	toFile( specif, options )
+//		toFile( specif, options )
+				// get the list of available files:
+		if( !specifData.files || specifData.files.length<1 )
+		get( 
+			options.filePath+'.json', 
+			'arraybuffer',
+			function(xhr) { 
+				// save the supplied files in specifData.files:
+				specifData.files = [];
+				let files = JSON.parse( buf2str(xhr.response) ).files;
+				files.forEach( function(f) { 
+								specifData.files.push({
+									id: 		f.url,
+									mimeType: 	f.mimeType
+								}) 
+							});
+//				console.debug('files-if1', files);
+//				toFile( specif, options )
+			for (i=0, j=files.length; i<j ;i++) {
+			let k=specifData.files[i].id;
+//			console.debug( 'href files',k);
+			}
+			}, 
+			function(xhr) { 
+				// no files supplied:
+				specifData.files = [];
+//				console.debug('files-xhr', specifData.files);
+				toFile( specif, options )
+			}, 
+		)
+	else {
+		// files are already listed, so we can start right away:
+		console.debug( 'files-else',specifData.files);
+		toFile( specif, options )		
+		}
 })()
+
+
+function get(url,rspT,sFn,nFn) {
+		// https://blog.garstasio.com/you-dont-need-jquery/
+		// https://www.sitepoint.com/guide-vanilla-ajax-without-jquery/
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+		xhr.withCredentials = "true";
+		// https://stackoverflow.com/a/42916772/2214
+		xhr.responseType = rspT;
+		xhr.onreadystatechange = function () {
+	//		console.debug('xhr',this.readyState,this)
+			if (this.readyState<4 ) return;
+			if (this.readyState==4 && this.status==200) {
+				if( typeof sFn=="function" ) sFn(this)
+			};
+			// continue in case of success and error:
+			if( typeof nFn=="function" ) nFn()	
+		};
+		xhr.send(null)
+	}
+// Convert arrayBuffer to string:
+	function buf2str(buf) {
+		// UTF-8 character table: http://www.i18nqa.com/debug/utf8-debug.html
+		// or: https://bueltge.de/wp-content/download/wk/utf-8_kodierungen.pdf
+		try {
+			// see https://developers.google.com/web/updates/2014/08/Easier-ArrayBuffer-String-conversion-with-the-Encoding-API
+			// DataView is a wrapper on top of the ArrayBuffer.
+			var dataView = new DataView(buf);
+			// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+			var decoder = new TextDecoder('utf-8');
+			return decoder.decode(dataView)
+		} catch (e) {
+			// see https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+			// for vintage browsers such as IE
+			// Known problem: Special chars like umlaut are not properly converted.
+			return String.fromCharCode.apply(null, new Uint8Array(buf))
+		}
+	}
 </script>
 </body>
 </html>

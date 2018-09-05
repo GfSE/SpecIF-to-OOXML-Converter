@@ -16,7 +16,8 @@ function toEpub( specifData, opts ) {
 //	if( !opts.linkFontColor ) opts.linkFontColor = '#005A92';	// darker
 	if( opts.linkNotUnderlined==undefined ) opts.linkNotUnderlined = false;
 	if( opts.preferPng==undefined ) opts.preferPng = true;
-		
+	
+	
 	// get the list of available files:
 	if( !specifData.files || specifData.files.length<1 )
 		get( 
@@ -102,6 +103,7 @@ function toEpub( specifData, opts ) {
 		};
 		for( i=0,I=ePub.images.length; i<I; i++ ) {
 			ePub.content += '<item id="img'+i+'" href="Images/'+ePub.images[i].title+'" media-type="'+ePub.images[i].mimeType+'"/>'
+			console.debug ('ePub.content',ePub.content);
 		};
 
 		ePub.content += '</manifest>'
@@ -184,7 +186,7 @@ function toEpub( specifData, opts ) {
 		}
 		function next() {
 			if( i>0 ) {
-				// download next image:
+				// download next image:				
 				get( addFilePath(ePub.images[--i].id), 'blob', save, next )
 			} else {
 				// done, store the specifz:
