@@ -178,7 +178,7 @@ function toEpub( specifData, opts ) {
 		function addFilePath( u ) {
 			if( /^https?:\/\/|^mailto:/i.test( u ) ) {
 				// don't change an external link starting with 'http://', 'https://' or 'mailto:'
-//				console.debug('addFilePath no change',u);
+				console.debug('addFilePath no change',u);
 				return u  		
 			};
 			// else, add path:
@@ -197,6 +197,7 @@ function toEpub( specifData, opts ) {
 						saveAs(blob, ePub.fileName+".epub")
 					})
 			};
+			console.debug('blob', blob);
 			return 
 			
 			function fileExt( str ) {

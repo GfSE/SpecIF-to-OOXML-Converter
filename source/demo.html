@@ -24,6 +24,7 @@
 	console.debug('start');
 //	console.debug('imageType',imageType);
 	var specif = specifData(),
+		j = null,
 		options = { 
 			filePath: 'https://se.reqif.net/reqif/v0.92/projects/'+specif.id+'/rev/0/files',
 			// If a hidden property is defined with value, it is suppressed only if it has this value;
@@ -33,7 +34,7 @@
 			propertiesLabel: 'Properties',
 			statementsLabel: 'Statements'
 		};
-//		toFile( specif, options )
+		
 				// get the list of available files:
 		if( !specifData.files || specifData.files.length<1 )
 		get( 
@@ -49,25 +50,54 @@
 									mimeType: 	f.mimeType
 								}) 
 							});
-//				console.debug('files-if1', files);
-//				toFile( specif, options )
-			for (i=0, j=files.length; i<j ;i++) {
-			let k=specifData.files[i].id;
-//			console.debug( 'href files',k);
-			}
-			}, 
+				console.debug('files', files);
+				j=files.length;	
+				next();
+				}, 
 			function(xhr) { 
 				// no files supplied:
 				specifData.files = [];
-//				console.debug('files-xhr', specifData.files);
 				toFile( specif, options )
 			}, 
 		)
-	else {
-		// files are already listed, so we can start right away:
-		console.debug( 'files-else',specifData.files);
-		toFile( specif, options )		
+		else {
+			// files are already listed, so we can start right away:
+			console.debug( 'files-else',specifData.files);
+			toFile( specif, options )		
+			}
+		
+		function next() {
+			j--;
+			console.debug ('nextfiles',specifData.files[j].id);
+			if( j>0 ) {
+				// download next image:
+				get( addFilePath(specifData.files[j].id), 'blob', save, next )
+			} 
+			else {
+			// done
+			console.debug('alle bilder mit url versehen', j);
+			}
+			return 
 		}
+		// ---------------
+		function addFilePath( u ) {
+			if( /^https?:\/\/|^mailto:/i.test( u ) ) {
+				// don't change an external link starting with 'http://', 'https://' or 'mailto:'
+				console.debug('addFilePath no change',u);
+				return u  		
+			};
+			// else, add path:
+//			console.debug('u',u);
+//			console.debug('filePath',options.filePath);
+			return options.filePath+'/'+u.replace( '\\', '/' )
+		} 
+		function save(rspO) {
+			// gets here only, if the file has been received successfully:
+			let name = rspO.responseURL.replace('\\','/').split("/");
+			console.debug('response',name[name.length-1], rspO.response)		
+	}
+
+	
 })()
 
 
@@ -80,7 +110,6 @@ function get(url,rspT,sFn,nFn) {
 		// https://stackoverflow.com/a/42916772/2214
 		xhr.responseType = rspT;
 		xhr.onreadystatechange = function () {
-	//		console.debug('xhr',this.readyState,this)
 			if (this.readyState<4 ) return;
 			if (this.readyState==4 && this.status==200) {
 				if( typeof sFn=="function" ) sFn(this)
