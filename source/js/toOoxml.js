@@ -52,7 +52,7 @@ function toOoxml( specifData, opts ) {
 		};
 	
 	var hyperlinkID = 0; 		//variable to count up w:id for hyperlinks
-//	var imageIDcount = 7; 		//variable to count up rId for pictures
+
 	
 	// The first section is a xhtml-file with the title page:
 	ooxml.sections.push(
@@ -364,9 +364,10 @@ function pushHeading( t, pars ) {
 			if( opts.imgExtensions==undefined ) opts.imgExtensions = [ 'png', 'jpg', 'svg', 'gif', 'jpeg' ];
 	//		if( opts.clickableElements==undefined ) opts.clickableElements = false;
 			
-				function addEpubPath( u ) {
+/*				function addEpubPath( u ) {
 					return opts.epubImgPath+withoutPath( u )
 				}
+*/				
 				function getType( str ) {
 					var t = /type="([^"]+)"/.exec( str );
 					if( t==null ) return '';
@@ -396,12 +397,13 @@ function pushHeading( t, pars ) {
 					str = str.replace('\\','/');
 					return str.substring( 0, str.lastIndexOf('.') )
 				}
-				function pushReferencedFiles( u, t ) {
+				function pushReferencedFiles( i, u, t ) {
+//					console.debug('u',u);
 					// avoid duplicate entries:
-					if( indexBy( ooxml.images, 'id', u )<0 ) {
+					if( indexBy( ooxml.images, 'id', i )<0 ) {
 						ooxml.images.push({
-							id: u,					// is the distinguishing/relative part of the URL
-							title: withoutPath(u),
+							id: i,					
+							title: u.replace('\\','/'),  // is the distinguishing/relative part of the URL
 							mimeType: t
 						})
 					}
@@ -447,18 +449,19 @@ function pushHeading( t, pars ) {
 						u2 = png.id.replace('\\','/');
 						t2 = png.mimeType
 					} 
-
-					pushReferencedFiles( u2, t2 );
+					let i2 = hashCode(u2)+'.'+extOf(u2);
+					pushReferencedFiles( i2, u2, t2 );
 //					console.debug( $0, $4, u1, u2, t2 );
 					
 					// get the file extension:
 					let e = fileExt(u2);
-					imageType.push(e);
+//					console.debug('e1',e);
+
 					
 					return 	'	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
 						+	'			<w:pict>		'
-						+	'				<v:shape id="_x0000_i1025" type="#_x0000_t75" style="width:453pt;height:264.75pt">	'
+						+	'				<v:shape id="_x0000_i1025" type="#_x0000_t75" style="width:222pt;height:57.75pt">	'
 						+	'				<v:imagedata r:id="rId'+imageIDcount+'" o:title="'+$4+'"/>	'
 						+	'				</v:shape>	'
 						+	'			</w:pict>		'
@@ -519,7 +522,8 @@ function pushHeading( t, pars ) {
 							u1 = png.id.replace('\\','/');
 							t1 = png.mimeType
 						};
-						pushReferencedFiles( u1, t1 );
+						let i1 = hashCode(u1)+'.'+extOf(u1);
+						pushReferencedFiles( i1, u1, t1 );
 						
 						d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
@@ -533,8 +537,7 @@ function pushHeading( t, pars ) {
 //						d = '<img src="'+addEpubPath(u1)+'" style="max-width:100%" alt="'+d+'" />'
 //						console.debug('d1', d);
 						//						d = '<object data="'+addEpubPath(u1)+'"'+t1+s1+' >'+d+'</object>
-						
-						imageType.push(e);
+//						console.debug('e2',e);
 						
 						
 					} else {
@@ -545,7 +548,8 @@ function pushHeading( t, pars ) {
 							// It is an ole-file, so add a preview image;
 							u1 = png.id.replace('\\','/');
 							t1 = png.mimeType;
-							pushReferencedFiles( u1, t1 );
+							let i1 = hashCode(u1)+'.'+extOf(u1);
+							pushReferencedFiles( i1, u1, t1 );
 							
 							d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
@@ -569,46 +573,11 @@ function pushHeading( t, pars ) {
 									'</w:r>'
 								'</w:p>';
 						}
-						imageType.push(e);
 					};
-//					console.debug('imageType',imageType);
-//					if( hasImg )
-//						return '<span class="forImage">'+d+'</span>'
-//					else
-	
-//					console.debug('d',d);
-						return d
+				return d
 				}
 			);
-/*
- 
-Recoginze the following html tags and replace them to see differences and remainig tags better
-<p></p>             ->      %abs% %/abs%
-<div></div>         ->      %cont% %/cont%
-<li></li>           ->      %lst% %/lst%
-<ul></ul>           ->      %ulst% %ulst%
-<th></th>           ->      %tkpf% %/tkpf%
-<tr></tr>           ->      %trei% %/trei%
-<td></td>           ->      %tzel% %/tzel%
-<table></table>     ->      %tab% %/tab%
-<tbody></tbody>     ->      %tkoe% %/tkoe%
-<img([\s\S]+?)>     ->      %img%
-<a
 
-
-
-txt = txt.replace(/<p[\s\S]*?>/g,'%abs%');         txt = txt.replace(/<\/p>/g,'%/abs%');
-txt = txt.replace(/<div[\s\S]*?>/g,'%cont%');      txt = txt.replace(/<\/div>/g,'%/cont%');
-txt = txt.replace(/<li>/g,'%lst%');                txt = txt.replace(/<\/li>/g,'%/lst%');
-txt = txt.replace(/<ul>/g,'%ulst%');               txt = txt.replace(/<\/ul>/g,'%/ulst%');
-txt = txt.replace(/<th>/g,'%tkpf%');               txt = txt.replace(/<\/th>/g,'%/tkpf%');
-txt = txt.replace(/<tr>/g,'%trei%');               txt = txt.replace(/<\/tr>/g,'%/trei%');
-txt = txt.replace(/<td>/g,'%tzel%');               txt = txt.replace(/<\/td>/g,'%/tzel%');
-txt = txt.replace(/<table[\s\S]*?>/g,'%tab%');     txt = txt.replace(/<\/table>/g,'%/tab%');
-txt = txt.replace(/<tbody>/g,'%tkoe%');            txt = txt.replace(/<\/tbody>/g,'%/tkoe%');
-txt = txt.replace(/<img([\s\S]+?)>/g,'%img%');
-
-*/
 
 // Bilder werden vorerst entfernt
 //txt = txt.replace(/<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>[\s]*<img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>[\s]*<\/div>/g,''); 
@@ -797,4 +766,9 @@ txt = txt.replace(/<\/tbody><\/table>/g,'</w:tbl>');
 		//                    get propertyClass
 		//	   get dataType
 	}
+	function extOf( str ) {
+		// get the file extension without the '.':
+		return str.substring( str.lastIndexOf('.')+1 )
+	}
+	function hashCode(s) {for(var r=0,i=0;i<s.length;i++)r=(r<<5)-r+s.charCodeAt(i),r&=r;return r}
 }

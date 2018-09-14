@@ -1,125 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>SpecIF to OOXML</title>
+    <title>SpecIF to Ooxml</title>
 	<meta charset="utf-8" />
 	<!--<meta http-equiv="cache-control" content="no-Cache" />-->
 	<meta http-equiv="expires" content="0" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<script type="text/javascript" src="./lib/jquery/jquery-3.3.1.min.js"></script>
 	<script type="text/javascript" src="./lib/filesaver/src/fileSaver.js"></script>
+	<script type="text/javascript" src="./lib/ajv/ajv-4.11.8.min.js"></script>
 	<script type="text/javascript" src="./lib/jszip/dist/jszip.js"></script>
-	<script type="text/javascript" src="./js/toFile.js"></script>
+	<script type="text/javascript" src="https://specif.de/v0.10.4/check.js"></script>
+	<script type="text/javascript" src="./lib/specif/importSpecif-0.93.1.js"></script>
 	<script type="text/javascript" src="./js/toOoxml.js"></script>
-	<script type="text/javascript" src="./test/specifData.js"></script>
+	<script type="text/javascript" src="./js/toFile.js"></script>
 	<script type="text/javascript"> var imageIDcount = 7</script>
-	<script type="text/javascript"> var imageType=new Array()</script>
+
 </head>
 <body>
-<div id="main">
-	<h1>SpecIF to OOXML</h1>
-</div>
 <script type="text/javascript">
-(function() {
-	// the DOM is available now.
-	console.debug('start');
-//	console.debug('imageType',imageType);
-	var specif = specifData(),
-		j = null,
-		options = { 
-			filePath: 'https://se.reqif.net/reqif/v0.92/projects/'+specif.id+'/rev/0/files',
-			// If a hidden property is defined with value, it is suppressed only if it has this value;
-			// if the value is undefined, the property is suppressed in all cases.
-			hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],
-			hideEmptyProperties: true,
-			propertiesLabel: 'Properties',
-			statementsLabel: 'Statements'
+////////////////////////////////////////////////////
+// This demo app imports SpecIF data from a file and uses 
+// the toFile and toOoxml routines for transformation to Ooxml. 
+//
+
+// used by importSpecif to check and manipulate SpecIF data:
+var specif = {
+		check: function( data ) {
+			// check the SpecIF data:
+			var cDO = $.Deferred();
+			// 1. Validate the data using the SpecIF schema:
+			cDO.notify('Checking schema',10);
+
+			// Get the specified schema file from the server:
+			get( 
+				"https://specif.de/v"+data.specifVersion+"/schema", 
+				'arraybuffer',	// response type
+				false,	// no authentication
+				function(xhr) { 
+//					console.debug('schema', xhr);
+					switch( xhr.status ) {
+						case 200:
+							// 1. check data against schema:
+							let rc = checkSchema( JSON.parse( buf2str(xhr.response) ), data );
+							if( rc.status!=0 ) { cDO.reject( rc ); return };
+
+							// 2. Check further constraints:
+							cDO.notify('Checking constraints',20);
+							rc = checkConstraints( data );
+							if( rc.status==0 ) 	cDO.resolve( data, rc )
+							else 				cDO.reject( rc );
+							break
+						case 404:
+							xhr = { status: 903, statusText: 'SpecIF version '+data.specifVersion+' is not supported by the program!' };
+						default:
+							cDO.reject(xhr)
+					}
+				}, 
+				null
+			);
+			return cDO
+		},
+		put: function(data) {
+//			console.debug('specif.put',data)
+			// no transformation needed in this context
+			return data
+		}
+	};
+// used by importSpecif to cache the data:
+var myProject = {
+		value: null,
+		create: function( data ) {
+//			console.debug('myProject.create',data);
+			var dO = $.Deferred();
+			this.value = data;
+			dO.resolve(null,'',{status:201});
+			return dO
+		},
+		abort: function() {
+			// not implemented
+		}
+	};
+// the demo app
+var app = {
+	main: function( file ) {
+			function readFile( f, fn ) {
+				console.debug( 'readFile ' + f.name );
+				var rdr = new FileReader();
+				rdr.onload = function(evt) {
+					fn( evt.target.result )		// import the file
+						.done( function() {
+							// process:
+							console.info('specif',myProject.value);
+							toFile( myProject.value, options )
+						})
+				//		.done( function() {alert('success')} )
+				//		.fail( function() {alert('failure')} )
+				};
+				rdr.readAsArrayBuffer( f )
+			}
+		// initialize:
+		var importSpecif = new ImportSpecif(); 	
+		importSpecif.open();
+		// check if file-type is eligible:
+		file = importSpecif.verify( file ); 
+		if( !file ) {
+			alert('wrong file-type');
+			return
 		};
 		
-				// get the list of available files:
-		if( !specifData.files || specifData.files.length<1 )
-		get( 
-			options.filePath+'.json', 
-			'arraybuffer',
-			function(xhr) { 
-				// save the supplied files in specifData.files:
-				specifData.files = [];
-				let files = JSON.parse( buf2str(xhr.response) ).files;
-				files.forEach( function(f) { 
-								specifData.files.push({
-									id: 		f.url,
-									mimeType: 	f.mimeType
-								}) 
-							});
-				console.debug('files', files);
-				j=files.length;	
-				next();
-				}, 
-			function(xhr) { 
-				// no files supplied:
-				specifData.files = [];
-				toFile( specif, options )
-			}, 
-		)
-		else {
-			// files are already listed, so we can start right away:
-			console.debug( 'files-else',specifData.files);
-			toFile( specif, options )		
-			}
-		
-		function next() {
-			j--;
-			console.debug ('nextfiles',specifData.files[j].id);
-			if( j>0 ) {
-				// download next image:
-				get( addFilePath(specifData.files[j].id), 'blob', save, next )
-			} 
-			else {
-			// done
-			console.debug('alle bilder mit url versehen', j);
-			}
-			return 
-		}
-		// ---------------
-		function addFilePath( u ) {
-			if( /^https?:\/\/|^mailto:/i.test( u ) ) {
-				// don't change an external link starting with 'http://', 'https://' or 'mailto:'
-				console.debug('addFilePath no change',u);
-				return u  		
+		var options = { 
+				// If a hidden property is defined with value, it is suppressed only if it has this value;
+				// if the value is undefined, the property is suppressed in all cases.
+				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],
+				hideEmptyProperties: true,
+				propertiesLabel: 'Properties',
+				statementsLabel: 'Statements'
 			};
-			// else, add path:
-//			console.debug('u',u);
-//			console.debug('filePath',options.filePath);
-			return options.filePath+'/'+u.replace( '\\', '/' )
-		} 
-		function save(rspO) {
-			// gets here only, if the file has been received successfully:
-			let name = rspO.responseURL.replace('\\','/').split("/");
-			console.debug('response',name[name.length-1], rspO.response)		
+		readFile( file, importSpecif.asBuf )
 	}
-
-	
-})()
-
-
-function get(url,rspT,sFn,nFn) {
+}
+///////////////////////////////////////////
+// used by importSpecif for transformation:
+	const CONFIG = {
+		imgExtensions: [ 'png', 'jpg', 'svg', 'gif', 'jpeg', 'png' ],
+		officeExtensions: []		// not supported (yet??)
+	};
+	function get(url,rspT,auth,successFn,nextFn) {
 		// https://blog.garstasio.com/you-dont-need-jquery/
 		// https://www.sitepoint.com/guide-vanilla-ajax-without-jquery/
 		var xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
-		xhr.withCredentials = "true";
+		if( auth ) xhr.withCredentials = "true";
 		// https://stackoverflow.com/a/42916772/2214
 		xhr.responseType = rspT;
 		xhr.onreadystatechange = function () {
+	//		console.debug('xhr',this.readyState,this)
 			if (this.readyState<4 ) return;
 			if (this.readyState==4 && this.status==200) {
-				if( typeof sFn=="function" ) sFn(this)
+				if( typeof successFn=="function" ) successFn(this)
 			};
 			// continue in case of success and error:
-			if( typeof nFn=="function" ) nFn()	
+			if( typeof nextFn=="function" ) nextFn()	
 		};
 		xhr.send(null)
 	}
-// Convert arrayBuffer to string:
 	function buf2str(buf) {
 		// UTF-8 character table: http://www.i18nqa.com/debug/utf8-debug.html
 		// or: https://bueltge.de/wp-content/download/wk/utf-8_kodierungen.pdf
@@ -127,7 +152,7 @@ function get(url,rspT,sFn,nFn) {
 			// see https://developers.google.com/web/updates/2014/08/Easier-ArrayBuffer-String-conversion-with-the-Encoding-API
 			// DataView is a wrapper on top of the ArrayBuffer.
 			var dataView = new DataView(buf);
-			// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
+			// see http://encoding.spec.whatwg.org/#interface-textdecoder
 			var decoder = new TextDecoder('utf-8');
 			return decoder.decode(dataView)
 		} catch (e) {
@@ -137,6 +162,22 @@ function get(url,rspT,sFn,nFn) {
 			return String.fromCharCode.apply(null, new Uint8Array(buf))
 		}
 	}
+	String.prototype.fileExt = function() {
+		return this.substring( this.lastIndexOf('.')+1 )
+	};
+	String.prototype.trimJSON = function() {
+		// trim all characters outside the outer curly brackets, which may include the UTF-8 byte-order-mask: 
+		let si = this.indexOf('{'),
+			li = this.lastIndexOf('}');
+		return this.substring(si,li+1)
+	};
 </script>
+<div id="main">
+	<h1>SpecIF to Ooxml Converter</h1>
+	<div style="padding-left:1em">
+		<div id="selectFile" >Please pick a file of type specif or specifz:</div>
+		<input id="importFile" type="file" name="files[]" onchange="app.main(this.files[0])" /><!-- (no 'multiple' attribute) -->
+	</div>
+</div>
 </body>
 </html>

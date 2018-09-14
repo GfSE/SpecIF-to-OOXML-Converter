@@ -11,10 +11,33 @@ function toFile( specifData, opts ) {
 //	if( !opts.linkFontColor ) opts.linkFontColor = '#005A92';	// darker
 	if( opts.linkNotUnderlined==undefined ) opts.linkNotUnderlined = false;
 	if( opts.preferPng==undefined ) opts.preferPng = true;
-				
-		createOoxml();
+	opts.xmlImgPath = 'Images/';
+	
+	var imageType=new Array(),
+		convertedImage=new Array();
+	
+if 	(specifData.files){	
+	image2base64(specifData.files, function(base64imgs) { 	
+		for (let i=0, I=base64imgs.length; i<I; i++) {
+			console.debug('bse64img',i,base64imgs[i]);
+			let img = base64imgs[i];													//cut base64 string in pieces of 76 chars and save it in the array 'convertedImage'
+				img = img.replace (/[\S]*?,([\S]*)/g,function ($1, $2) {		
+				$2 = $2.match(/.{1,76}/g);
+//				console.debug('$2',$2);
+				convertedImage.push($2);
+				console.debug('i',i);
+				console.debug(convertedImage[0]);
+				})			
+		}
 
+	createOoxml();
+	
+	});
+} else {
+	createOoxml();
+}
 	return
+
 	
 	// -----------------------
 	function createOoxml() {
@@ -23,9 +46,20 @@ function toFile( specifData, opts ) {
 		let i=null, I=null, 
 			file = toOoxml( specifData, opts );
 		console.debug( 'ooxml',file );
-
 		file.fileName = specifData.title;
+		
+		//get imagefile extension from specifData.files 
+		for (let l=0, L=specifData.files.length;l<L;l++) {
+			let type = specifData.files[l].id
+//			console.debug('id', specifData.files[l].id);
+			type = type.replace(/[\S]*.([\S]..)/g,function ($1, $2) {		
+//			console.debug('$2',$2);
+			imageType.push($2)
+			})
+		}
 
+	
+		
 /*		file.styles = 	
 					'body { margin-top:2%; margin-right:2%; margin-bottom:2%; margin-left:2%; font-family:Arial,sans-serif; font-size:100%; font-weight: normal; } \n'
 			+		'div, p { text-align: justify; margin: 0.6em 0em 0em 0em; } \n'
@@ -78,10 +112,11 @@ function toFile( specifData, opts ) {
 +	'	<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings" Target="webSettings.xml"/>	'
 +	'	<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable" Target="fontTable.xml"/>	'
 +	'	<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>	'
-			
-		for (let a=7,A=imageIDcount;a<=A;a++) {
-		file.content += '<Relationship Id="rId'+a+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a-6)+'.'+imageType[(a-7)]+'"/>	'
-		};
+
+// for each image get an Line to link the image into the document			
+for (let a=0,A=specifData.files.length;a<A;a++) {
+	file.content += '<Relationship Id="rId'+(a+7)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+imageType[(a)]+'"/>	'
+};
 	
 file.content +=	'	     </Relationships>	'
 			+	'	 </pkg:xmlData>	'
@@ -91,18 +126,9 @@ file.content +=	'	     </Relationships>	'
 			+	'	     <w:document mc:Ignorable="w14 w15 wp14" xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">	'
 			+	'	  <w:body>     	';
 
-		
-//		for( i=0,I=file.sections.length; i<I; i++ ) {
-//			file.content += ' '+ i +' '+ specifData.title;
-//			file.content += '<item id="sect'+i+'" href="Text/sect'+i+'.xhtml" media-type="application/xhtml+xml" />'
-//		};
-//		console.debug( 'specifData.sections.length',file.sections.length);
-
-
 // Sections Title - Heading1
 
-		for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
-//			file.content += ' '+specifData.hierarchies[h].title;			//paragraphOf( specifData.hierarchies[h], 1 )
+for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
 			file.content += '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
                 +        '<w:pPr>'
                 +            '<w:pStyle w:val="berschrift1" />'
@@ -113,72 +139,59 @@ file.content +=	'	     </Relationships>	'
                 +        '<w:r w:rsidRPr="00997056">'
 				+            '<w:t>'+specifData.hierarchies[h].title+'</w:t>'
                 +        '</w:r>'
-                +    '</w:p>'
-			
-			
-						
-//			for ( var k=0,K= specifData.hierarchies.node.length;k<K; k++) {
-//				file.content += ' '+specifData.hierarchies.node[k].id;
-//			}		
-						
-		}
+                +    '</w:p>'							
+}
 
 // Sections ID - plain text
 
-		for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
-//			file.content += ' '+specifData.hierarchies[h].id+' ';
-  			file.content += '	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
-+	'	                        <w:pPr>	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                        </w:pPr>	'
-+	'	                        <w:proofErr w:type="spellStart" />	'
-+	'	                        <w:r w:rsidRPr="002676EC">	'
-+	'	                            <w:rPr>	'
-+	'	                                <w:lang w:val="en-US" />	'
-+	'	                            </w:rPr>	'
-+	'	                            <w:t>SpecIF-'+specifData.hierarchies[h].id+'</w:t>	'
-+	'	                        </w:r>	'
-+	'	                        <w:proofErr w:type="spellEnd" />	'
-+	'	                        <w:bookmarkStart w:id="0" w:name="_GoBack" />	'
-+	'	                        <w:bookmarkEnd w:id="0" />	'
-+	'	                    </w:p>	'
-		}
+for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
+	file.content += '	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
+		+	'	                        <w:pPr>	'
+		+	'	                            <w:rPr>	'
+		+	'	                                <w:lang w:val="en-US" />	'
+		+	'	                            </w:rPr>	'
+		+	'	                        </w:pPr>	'
+		+	'	                        <w:proofErr w:type="spellStart" />	'
+		+	'	                        <w:r w:rsidRPr="002676EC">	'
+		+	'	                            <w:rPr>	'
+		+	'	                                <w:lang w:val="en-US" />	'
+		+	'	                            </w:rPr>	'
+		+	'	                            <w:t>SpecIF-'+specifData.hierarchies[h].id+'</w:t>	'
+		+	'	                        </w:r>	'
+		+	'	                        <w:proofErr w:type="spellEnd" />	'
+		+	'	                        <w:bookmarkStart w:id="0" w:name="_GoBack" />	'
+		+	'	                        <w:bookmarkEnd w:id="0" />	'
+		+	'	                    </w:p>	'
+	}
 		
-/*		// file.headings.length = 0 -> wird nicht ausgeführt
-		for( i=0,I=file.headings.length; i<I; i++ ) {					
-				file.content += 	'<navPoint id="tocHd'+i+'" playOrder="'+(i+1)+'">'
-		//		+				'<navLabel><text>'+file.headings[i].title+'</text></navLabel>'
-		//		+				'<content src="Text/sect'+file.headings[i].section+'.xhtml#'+file.headings[i].id+'"/>'
-		//		+			'</navPoint>'
-		};
-*/
-		
-			
-		let t=file.sections.length; 
-			file.content += file.sections[t-1];
-//			console.debug('fileSections',file.sections[t-1]);
+let t=file.sections.length; 
+file.content += file.sections[t-1];
+
 
 // content-end		
 file.content += '				<w:sectPr w:rsidR="00AE0319">							'
-+	'							<w:pgSz w:w="11906" w:h="16838"/>						'
-+	'							<w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/>						'
-+	'							<w:cols w:space="708"/>						'
-+	'							<w:docGrid w:linePitch="360"/>						'
-+	'						</w:sectPr>							'
-+	'					</w:body>								'
-+	'				</w:document>									'
-+	'			</pkg:xmlData>										'
-+	'		</pkg:part>'
+	+	'							<w:pgSz w:w="11906" w:h="16838"/>						'
+	+	'							<w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/>						'
+	+	'							<w:cols w:space="708"/>						'
+	+	'							<w:docGrid w:linePitch="360"/>						'
+	+	'						</w:sectPr>							'
+	+	'					</w:body>								'
+	+	'				</w:document>									'
+	+	'			</pkg:xmlData>										'
+	+	'		</pkg:part>'
 
 // picture content section 		
 for (let a=7,A=imageIDcount;a<=A;a++) {
 	file.content +='<pkg:part pkg:name="/word/media/image'+(a-6)+'.'+imageType[a-7]+'" pkg:contentType="image/'+imageType[a-7]+'" pkg:compression="store">'
-	+'<pkg:binaryData>+abgerufenes-Bild'+(a-6)+'-77-ZeichenBase64' +String.fromCharCode(13)+String.fromCharCode(10)
-	+'</pkg:binaryData>'	+String.fromCharCode(13)+String.fromCharCode(10)
-	+'</pkg:part>'
-}
+	+'<pkg:binaryData>'
+	for (let l=0, L=convertedImage.length; l<L; l++) {
+		for (let k=0, K=convertedImage[l].length; k<K; k++) {
+			file.content +=convertedImage[l][k]+String.fromCharCode(13)+String.fromCharCode(10)
+		}
+	}
+	file.content +='</pkg:binaryData>'
+		+'</pkg:part>'
+}	
 
 // document end
 file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.theme+xml">											'
@@ -1267,7 +1280,7 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 
 
 //		console.debug('file',file);
-		storeOoxml(file)
+		storeOoxml(file);
 	}
 	
 	
@@ -1286,46 +1299,11 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 		saveAs(blob, xml.fileName+".xml");
 		return
 
-/*		// ---------------
-		function addFilePath( u ) {
-			if( /^https?:\/\/|^mailto:/i.test( u ) ) {
-				// don't change an external link starting with 'http://', 'https://' or 'mailto:'
-//				console.debug('addFilePath no change',u);
-				return u  		
-			};
-			// else, add path:
-			return opts.filePath+'/'+u.replace( '\\', '/' )
-		}
-		function next() {
-			if( i>0 ) {
-				// download next image:
-				get( addFilePath(file.images[--i].id), 'blob', save, next )
-			} else {
-				// done, store the specifz:
-				zip.generateAsync({
-						type: "blob"
-					})
-					.then(function(blob) {
-						saveAs(blob, file.fileName+".xml")
-					})
-			};
-			return 
-			
-			function fileExt( str ) {
-				return str.substring( str.lastIndexOf('.')+1 )
-			}
-			function fileName( str ) {
-				return str.substring( 0, str.lastIndexOf('.') )
-			}
-		}
-		function save(rspO) {
-			// gets here only, if the file has been received successfully:
-			let name = rspO.responseURL.replace('\\','/').split("/");
-			zip.file( 'OEBPS/Images/'+name[name.length-1], rspO.response )
-		}
-*/	}
+
+	}
 	// Convert arrayBuffer to string:
 	function buf2str(buf) {
+		console.debug('buf',buf);
 		// UTF-8 character table: http://www.i18nqa.com/debug/utf8-debug.html
 		// or: https://bueltge.de/wp-content/download/wk/utf-8_kodierungen.pdf
 		try {
@@ -1334,6 +1312,7 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 			var dataView = new DataView(buf);
 			// The TextDecoder interface is documented at http://encoding.spec.whatwg.org/#interface-textdecoder
 			var decoder = new TextDecoder('utf-8');
+			console.debug('decoder', decoder);
 			return decoder.decode(dataView)
 		} catch (e) {
 			// see https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
@@ -1342,23 +1321,32 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 			return String.fromCharCode.apply(null, new Uint8Array(buf))
 		}
 	}
-	function get(url,rspT,sFn,nFn) {
-		// https://blog.garstasio.com/you-dont-need-jquery/
-		// https://www.sitepoint.com/guide-vanilla-ajax-without-jquery/
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', url, true);
-		xhr.withCredentials = "true";
-		// https://stackoverflow.com/a/42916772/2214
-		xhr.responseType = rspT;
-		xhr.onreadystatechange = function () {
-	//		console.debug('xhr',this.readyState,this)
-			if (this.readyState<4 ) return;
-			if (this.readyState==4 && this.status==200) {
-				if( typeof sFn=="function" ) sFn(this)
-			};
-			// continue in case of success and error:
-			if( typeof nFn=="function" ) nFn()	
-		};
-		xhr.send(null)
+
+	function itemById(L,id) {
+				if(!L||!id) return null;
+				// given the ID of an element in a list, return the element itself:
+				id = id.trim();
+				for( var i=L.length-1;i>-1;i-- )
+					if( L[i].id === id ) return L[i];   // return list item
+				return null
+	}
+	
+	
+
+	function image2base64(files, successCallback) {			
+		var base64Images=new Array();
+		console.debug('files',files);
+		for (let l=0, L=files.length;l<L;l++) {
+			var reader = new FileReader();
+			reader.readAsDataURL(files[l].blob); 
+			reader.onloadend = async function() {
+				let base64data = await reader.result;
+					base64Images.push(base64data);
+					console.debug('base64data',base64data);
+				if (base64Images.length === L) {
+					successCallback(base64Images);
+				}
+			}
+		}
 	}
 }
