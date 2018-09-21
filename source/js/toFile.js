@@ -39,6 +39,7 @@ function toFile( specifData, opts ) {
 	
 	
 if 	(imgTemp){	
+	console.debug('imgTemp', imgTemp);
 	image2base64(imgTemp, function(base64imgs) { 	
 		for (let i=0, I=base64imgs.length; i<I; i++) {
 //			console.debug('bse64img',base64imgs[i].b64);
@@ -159,7 +160,7 @@ for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
 		
 let t=file.sections.length; 
 file.content += file.sections[t-1];
-console.debug('sections',file.sections[t-1]);
+//console.debug('sections',file.sections[t-1]);
 
 // letze Ersetzungen 
 // Dopplungen entfernen
@@ -182,17 +183,18 @@ file.content += '				<w:sectPr w:rsidR="00AE0319">							'
 	+	'			</pkg:xmlData>										'
 	+	'		</pkg:part>'
 
-// picture content section 		
-for (let a=0,A=imageLink.length;a<A;a++) {
-	file.content +='<pkg:part pkg:name="/word/media/image'+(a+1)+'.'+imageLink[a].type+'" pkg:contentType="image/'+imageLink[a].type+'" pkg:compression="store">'
-	+'<pkg:binaryData>'
-	for (let k=0, K=convertedImage[a].length; k<K; k++) {
-			file.content +=convertedImage[a][k]+String.fromCharCode(13)+String.fromCharCode(10)
-		}
-	file.content +='</pkg:binaryData>'
-		+'</pkg:part>'
+// picture content section
+if  (convertedImage[0]) {
+	for (let a=0,A=imageLink.length;a<A;a++) {
+		file.content +='<pkg:part pkg:name="/word/media/image'+(a+1)+'.'+imageLink[a].type+'" pkg:contentType="image/'+imageLink[a].type+'" pkg:compression="store">'
+		+'<pkg:binaryData>'
+		for (let k=0, K=convertedImage[a].length; k<K; k++) {
+				file.content +=convertedImage[a][k]+String.fromCharCode(13)+String.fromCharCode(10)
+			}
+		file.content +='</pkg:binaryData>'
+			+'</pkg:part>'
+	}
 }
-
 
 // document end
 file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.theme+xml">											'
@@ -1332,25 +1334,37 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 // 	gets an array of images and converts into base64 strings back into array 'base64Images'
 	function image2base64(files, successCallback) {			
 		var base64Images=new Array();
-//		console.debug('files',files);
-		for (let l=0, L=files.length;l<L;l++) {
-			var reader = new FileReader();	
-			function toBase64(f) {
-				 const reader = new FileReader();
-				 reader.addEventListener('loadend', function(e) {
-//							console.debug('reader',e);
-							base64Images.push({id:f.id,b64:e.target.result});
-							if (base64Images.length === L) {
-								console.debug('base64Images', base64Images);
-								successCallback(base64Images)
-							}
-				 });
-				 reader.readAsDataURL(f.blob)
-			}
-			toBase64(files[l]);
+		console.debug('files',files);
+		if (files.length > 0) {
+			if (files[0].blob) {
+				for (let l=0, L=files.length;l<L;l++) {
+					var reader = new FileReader();	
+					function toBase64(f) {
+						 const reader = new FileReader();
+						 reader.addEventListener('loadend', function(e) {
+		//							console.debug('reader',e);
+									base64Images.push({id:f.id,b64:e.target.result});
+									if (base64Images.length === L) {
+										console.debug('base64Images', base64Images);
+										successCallback(base64Images)
+									}
+						 });
+						 reader.readAsDataURL(f.blob)
+					}
+					toBase64(files[l]);
 
+				}
+				
+			}
+			else {
+				console.debug('Keine Dateien geladen');
+				createOoxml();
+			}
 		}
-		
+		else {
+			console.debug('Keine Dateien geladen');
+			createOoxml();
+		}		
 	}
 	
 }
