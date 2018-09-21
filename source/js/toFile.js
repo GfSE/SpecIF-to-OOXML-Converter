@@ -14,22 +14,44 @@ function toFile( specifData, opts ) {
 	opts.xmlImgPath = 'Images/';
 	
 	var imageType=new Array(),
-		convertedImage=new Array();
+		convertedImage=new Array(),
+		imgTemp=new Array();
 	
-if 	(specifData.files){	
-	image2base64(specifData.files, function(base64imgs) { 	
+	
+	for (let i=0, I=specifData.files.length; i<I; i++) {									//filter out .svg images
+//		console.debug('filesid',specifData.files[i].id);
+			let type = specifData.files[i].id
+//			console.debug('id', specifData.files[i].id);
+			type = type.replace(/[\S]*.([\S]..)/g,function ($1, $2) {		
+//				console.debug('$2',$2);
+//				imageType.push($2)
+				if ($2 === 'svg') {
+					return
+				}
+//					console.debug('SVG');
+				else {
+					imgTemp.push(specifData.files[i]);
+					imageType.push($2);
+//					console.debug('keinSVG');
+				}
+			})
+	}	
+	
+	
+if 	(imgTemp){	
+	image2base64(imgTemp, function(base64imgs) { 	
 		for (let i=0, I=base64imgs.length; i<I; i++) {
-			console.debug('bse64img',i,base64imgs[i]);
-			let img = base64imgs[i];													//cut base64 string in pieces of 76 chars and save it in the array 'convertedImage'
+//			console.debug('bse64img',base64imgs[i].b64);
+			let img = base64imgs[i].b64;													//cut base64 string in pieces of 76 chars and save it in the array 'convertedImage'
 				img = img.replace (/[\S]*?,([\S]*)/g,function ($1, $2) {		
 				$2 = $2.match(/.{1,76}/g);
 //				console.debug('$2',$2);
 				convertedImage.push($2);
-				console.debug('i',i);
-				console.debug(convertedImage[0]);
 				})			
-		}
-
+		} 
+		console.debug('convertedImage',convertedImage);
+	
+	
 	createOoxml();
 	
 	});
@@ -42,53 +64,23 @@ if 	(specifData.files){
 	// -----------------------
 	function createOoxml() {
 		// All required parameters are available, so we can begin.
-		var imgType=null
+				
 		let i=null, I=null, 
 			file = toOoxml( specifData, opts );
 		console.debug( 'ooxml',file );
 		file.fileName = specifData.title;
 		
-		//get imagefile extension from specifData.files 
+/*		//get imagefile extension from specifData.files 
 		for (let l=0, L=specifData.files.length;l<L;l++) {
 			let type = specifData.files[l].id
 //			console.debug('id', specifData.files[l].id);
 			type = type.replace(/[\S]*.([\S]..)/g,function ($1, $2) {		
-//			console.debug('$2',$2);
+			console.debug('$2',$2);
 			imageType.push($2)
 			})
+			
 		}
-
-	
-		
-/*		file.styles = 	
-					'body { margin-top:2%; margin-right:2%; margin-bottom:2%; margin-left:2%; font-family:Arial,sans-serif; font-size:100%; font-weight: normal; } \n'
-			+		'div, p { text-align: justify; margin: 0.6em 0em 0em 0em; } \n'
-			+		'div.title { text-align: center; font-size:200%; margin-top:3.6em } \n'
-			+		'.inline-label { font-size: 90%; font-style: italic; margin-top:0.9em; } \n'
-			+		'p.metaTitle { color: '+opts.metaFontColor+'; font-size: 90%; font-style: italic; margin-top:0.9em; } \n'
-			+		'a { color: '+opts.linkFontColor+'; '+(opts.linkNotUnderlined?'text-decoration: none; ':'')+'} \n'
-			+		'table.propertyTable, table.statementTable { color: '+opts.metaFontColor+'; width:100%; border-top: 1px solid #DDDDDD; border-collapse:collapse; margin: 0.6em 0em 0em 0em; padding: 0;} \n'
-			+		'table.propertyTable td, table.statementTable td { font-size: '+opts.metaFontSize+'; border-bottom:  1px solid #DDDDDD; border-collapse:collapse; margin: 0; padding: 0em 0.2em 0em 0.2em; } \n'
-			+		'td.propertyTitle, td.statementTitle { font-style: italic; } \n'
-			+		'table.stdInlineWithBorder, table.doors-table { width:100%; border: 1px solid #DDDDDD; border-collapse:collapse; vertical-align:top; margin: 0; padding: 0; } \n'
-			+		'table.stdInlineWithBorder th, table.stdInlineWithBorder td, table.doors-table th, table.doors-table td { border: 1px solid  #DDDDDD; margin: 0; padding: 0 0.1em 0 0.1em; font-size: 90% } \n'
-	//		+		'h5 { font-family:Arial,sans-serif; font-size:110%; font-weight: normal; margin: 0.6em 0em 0em 0em; } \n'
-			+		'h4 { font-family:Arial,sans-serif; font-size:120%; font-weight: normal; margin: 0.6em 0em 0em 0em; page-break-after: avoid; } \n'
-			+		'h3 { font-family:Arial,sans-serif; font-size:140%; font-weight: normal; margin: 0.9em 0em 0em 0em; page-break-after: avoid; } \n'
-			+		'h2 { font-family:Arial,sans-serif; font-size:160%; font-weight: normal; margin: 1.2em 0em 0em 0em; page-break-after: avoid; } \n'
-			+		'h1 { font-family:Arial,sans-serif; font-size:180%; font-weight: normal; margin: 1.8em 0em 0em 0em; page-break-after: avoid; } \n';
-
-		file.content = 
-					'<?xml version="1.0" encoding="UTF-8"?>'
-			+		'<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">'
-			+			'<dc:identifier id="BookID" opf:scheme="UUID">SpecIF-'+specifData.id+'</dc:identifier>'	
-			+			'<dc:title>'+specifData.title+'</dc:title>'
-			+			'<dc:creator opf:role="aut">'+specifData.createdBy.familyName+', '+specifData.createdBy.givenName+'</dc:creator>'
-			+			'<dc:publisher>'+specifData.createdBy.org.organizationName+'</dc:publisher>'
-			+			'<dc:language>en-US</dc:language>'
-			+			'<dc:rights>'+specifData.rights.title+'</dc:rights>'
-			+		'</metadata>'
-*/
+*/		
 
 // Dokument begin		
 		file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -113,9 +105,10 @@ if 	(specifData.files){
 +	'	<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable" Target="fontTable.xml"/>	'
 +	'	<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>	'
 
-// for each image get an Line to link the image into the document			
-for (let a=0,A=specifData.files.length;a<A;a++) {
-	file.content += '<Relationship Id="rId'+(a+7)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+imageType[(a)]+'"/>	'
+// for each image get an Line to link the image into the document
+//console.debug('imageLink',imageLink);			
+for (let a=0,A=imageLink.length;a<A;a++) {
+	file.content += '<Relationship Id="rId'+(imageLink[a].id)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+imageLink[a].type+'"/>	'
 };
 	
 file.content +=	'	     </Relationships>	'
@@ -166,8 +159,17 @@ for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
 		
 let t=file.sections.length; 
 file.content += file.sections[t-1];
+console.debug('sections',file.sections[t-1]);
 
-
+// letze Ersetzungen 
+// Dopplungen entfernen
+file.content = file.content.replace(/<w:p w:rsidRDefault="00F717C9" w:rsidP="00F717F9">[\s]*<w:pPr>[\s]*<w:rPr>[\s]*<w:lang w:val="en-US" \/>[\s]*<\/w:rPr>[\s]*<\/w:pPr>[\s]*<w:r>[\s]*<w:rPr>[\s]*<w:lang w:val="en-US" \/>[\s]*<\/w:rPr>[\s]*<w:t>[\s]*<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">[\s]*<w:r>[\s]*<w:pict>/g,'<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF"><w:r><w:pict>');
+file.content = file.content.replace(/<\/w:pict>[\s]*<\/w:r>[\s]*<\/w:p>[\s]*<\/w:t>[\s]*<\/w:r>[\s]*<\/w:p>/g,'</w:pict></w:r></w:p>');
+file.content = file.content.replace(/<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E">[\s]*<\/w:t>/g,'</w:t>');
+// Zeichen '<' umwandeln 
+file.content = file.content.replace(/< ([0-9]{1,})/g, function ($0, $1,){ return '&lt; ' + $1 });
+		
+		
 // content-end		
 file.content += '				<w:sectPr w:rsidR="00AE0319">							'
 	+	'							<w:pgSz w:w="11906" w:h="16838"/>						'
@@ -181,17 +183,16 @@ file.content += '				<w:sectPr w:rsidR="00AE0319">							'
 	+	'		</pkg:part>'
 
 // picture content section 		
-for (let a=7,A=imageIDcount;a<=A;a++) {
-	file.content +='<pkg:part pkg:name="/word/media/image'+(a-6)+'.'+imageType[a-7]+'" pkg:contentType="image/'+imageType[a-7]+'" pkg:compression="store">'
+for (let a=0,A=imageLink.length;a<A;a++) {
+	file.content +='<pkg:part pkg:name="/word/media/image'+(a+1)+'.'+imageLink[a].type+'" pkg:contentType="image/'+imageLink[a].type+'" pkg:compression="store">'
 	+'<pkg:binaryData>'
-	for (let l=0, L=convertedImage.length; l<L; l++) {
-		for (let k=0, K=convertedImage[l].length; k<K; k++) {
-			file.content +=convertedImage[l][k]+String.fromCharCode(13)+String.fromCharCode(10)
+	for (let k=0, K=convertedImage[a].length; k<K; k++) {
+			file.content +=convertedImage[a][k]+String.fromCharCode(13)+String.fromCharCode(10)
 		}
-	}
 	file.content +='</pkg:binaryData>'
 		+'</pkg:part>'
-}	
+}
+
 
 // document end
 file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.theme+xml">											'
@@ -1288,10 +1289,6 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 		let i=null, I=null,
 			fileContent = '';
 
-		// Add the styles:
-		if( xml.styles ) 
-			fileContent = xml.styles;
-		
 		// Add the content:
 		fileContent += xml.content;
 		
@@ -1325,28 +1322,35 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 	function itemById(L,id) {
 				if(!L||!id) return null;
 				// given the ID of an element in a list, return the element itself:
-				id = id.trim();
+//				id = id.trim();
 				for( var i=L.length-1;i>-1;i-- )
 					if( L[i].id === id ) return L[i];   // return list item
 				return null
 	}
 	
 	
-
+// 	gets an array of images and converts into base64 strings back into array 'base64Images'
 	function image2base64(files, successCallback) {			
 		var base64Images=new Array();
-		console.debug('files',files);
+//		console.debug('files',files);
 		for (let l=0, L=files.length;l<L;l++) {
-			var reader = new FileReader();
-			reader.readAsDataURL(files[l].blob); 
-			reader.onloadend = async function() {
-				let base64data = await reader.result;
-					base64Images.push(base64data);
-					console.debug('base64data',base64data);
-				if (base64Images.length === L) {
-					successCallback(base64Images);
-				}
+			var reader = new FileReader();	
+			function toBase64(f) {
+				 const reader = new FileReader();
+				 reader.addEventListener('loadend', function(e) {
+//							console.debug('reader',e);
+							base64Images.push({id:f.id,b64:e.target.result});
+							if (base64Images.length === L) {
+								console.debug('base64Images', base64Images);
+								successCallback(base64Images)
+							}
+				 });
+				 reader.readAsDataURL(f.blob)
 			}
+			toBase64(files[l]);
+
 		}
+		
 	}
+	
 }

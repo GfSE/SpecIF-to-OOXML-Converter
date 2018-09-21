@@ -113,32 +113,11 @@ function pushHeading( t, pars ) {
 		if( ic ) ic += '&#160;'; // non-breakable space
 		let ti = titleValOf( r, rC, opts );
 		if( !pars || pars.level<1 ) return  (ti?ic+ti:'');  // Rückgabe als Rohtext
-/*		if( !pars || pars.level<1 ) return	'	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
-		+	'	                        <w:pPr>	'
-		+	'	                            <w:rPr>	'
-		+	'	                                <w:lang w:val="en-US" />	'
-		+	'	                            </w:rPr>	'
-		+	'	                        </w:pPr>	'
-		+	'	                        <w:proofErr w:type="spellStart" />	'
-		+	'	                        <w:r w:rsidRPr="002676EC">	'
-		+	'	                            <w:rPr>	'
-		+	'	                                <w:lang w:val="en-US" />	'
-		+	'	                            </w:rPr>	'
-		+	'	                            <w:t>'+(ti?ic+ti:'')+'</w:t>	'
-		+	'	                        </w:r>	'
-		+	'	                        <w:r w:rsidR="00997056">	'
-		+	'	                            <w:rPr>	'
-		+	'	                                <w:lang w:val="en-US" />	'
-		+	'	                            </w:rPr>	'
-		+	'	                            <w:t>Standard</w:t>	'
-		+	'	                        </w:r>	'
-		+	'	                        <w:proofErr w:type="spellEnd" />	'
-		+	'	                    </w:p>	'
-*/
+
 
 // andernfalls Rückgabe als Kapitelüberschrift:
 		let h = rC.isHeading?2:3;
-//		return '<h'+h+' id="'+pars.nodeId+'">'+(ti?ic+ti:'')+'</h'+h+'>'
+
 		hyperlinkID++;
 //		console.debug('hyperlinkID',hyperlinkID);
 		return '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
@@ -176,48 +155,7 @@ function pushHeading( t, pars ) {
 //		console.debug( 'statements', r.title, sts );
 //		if( Object.keys(sts).length<1 ) return '';
 		if( noSts ) return '';
-/*		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
-		ct += '<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid><w:gridCol w:w="3020"/><w:gridCol w:w="3021"/><w:gridCol w:w="3021"/></w:tblGrid>';
-		for( cid in sts ) {
-			// we don't have (and don't need) the individual statement, just the class:
-			cl = itemById(specifData[sClasses],cid);   // Suche die Klasse der betreffenden Relation
-			// table with 3 columns:		
-			if( sts[cid].subjects.length>0 ) {
-				ct += '<w:tr w:rsidR="006438EE" w:rsidTr="006438EE"><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>';
-				for( i=0, I=sts[cid].subjects.length; i<I; i++ ) {
-					r2 = sts[cid].subjects[i];
-	//				console.debug('r2',r2,itemById( specifData[rClasses], r2[rClass]))
-	//				ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%%%br/%%'
-					ct += '%hl% '+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+' %/hl%'+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
-				};
-				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title;
-				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
-				ct += '</w:t></w:r></w:p></w:tc></w:tr>'
-			};
-			if( sts[cid].objects.length>0 ) {
-				ct += '<w:tr w:rsidR="006438EE" w:rsidTr="006438EE"><w:tc><w:tcPr><w:tcW w:w="2929" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts );
-				ct += '</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>'+cl.title+'</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="2266" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>';
-				for( i=0, I=sts[cid].objects.length; i<I; i++ ) {
-					r2 = sts[cid].objects[i];
-	//				ct += '%%a href="'+anchorOf( r2 )+'"%%'+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+'%%/a%%%%br/%%'
-					ct += '%hl% '+titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts )+' %/hl%'+'</w:t></w:r></w:p><w:p w:rsidR="00C90706" w:rsidRDefault="00C90706" w:rsidP="006438EE"><w:r><w:t>'
-				};
-				ct += '</w:t></w:r></w:p></w:tc></w:tr>'
-			}
-/*			ct = ct.replace( /((<w:p[\s\S]*?>)|(<w:p[\s\S]*?>))*(%hl% ([\s\S]*?) %\/hl%)(<\/w:t>[\s]*<\/w:r>[\s]*<\/w:p>)/g,   
-				function( $0, $1, $2, $3 , $4, $5) {
-					var s0 = $0
-					s0 = s0.replace(/
-					var s1 = $1
-					var s2 = $2
-					var s3 = $3
-					var s4 = $4
-					var s5 = $5
-					
-					}
-				)
-			)	
-*/
+
 
 		ct = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E"><w:r><w:t>'+opts.statementsLabel+'</w:t></w:r></w:p>';
 		ct += '<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid><w:gridCol w:w="3020"/><w:gridCol w:w="3021"/><w:gridCol w:w="3021"/></w:tblGrid>';
@@ -317,7 +255,6 @@ function pushHeading( t, pars ) {
 				|| opts.headingProperties.indexOf(rt)>-1
 				|| opts.titleProperties.indexOf(rt)>-1 
 				|| opts.descriptionProperties.indexOf(rt)>-1 ) continue;
-//			c2 += '<tr><td class="propertyTitle">'+rt+'</td><td>'+valOf( r.properties[a] )+'</td></tr>'
 // 			Inner table
 			c2 += '<w:tr w:rsidR="00E266C5" w:rsidTr="00E35BF5">'			//Beginning first line of the table
 				+			'<w:tc>'
@@ -456,7 +393,8 @@ function pushHeading( t, pars ) {
 					// get the file extension:
 					let e = fileExt(u2);
 //					console.debug('e1',e);
-
+					imageLink.push({id:imageIDcount,url:u2,type:extOf(u2)});
+//					console.debug('imageIDcount1',imageIDcount);
 					
 					return 	'	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
@@ -467,22 +405,6 @@ function pushHeading( t, pars ) {
 						+	'			</w:pict>		'
 						+	'		</w:r>			'
 						+	'	</w:p>				'
-
-/*					return '	<w:p wsp:rsidR="005A3E7D" wsp:rsidRDefault="00F82A01">					'
-						+	'		<w:r>				'
-						+	'			<w:pict>			'
-						+	'				<w:binData w:name="wordml://'+$4+'" xml:space="preserve">		'
-						+	' iVBORw0KGgoAAAANSUhEUgAAAN4AAAA6CAIAAABQ0HB0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVNnVFPpFj333vRCS4iAlEtvUhUIIFJCi4AUkSYqIQkQSoghodkVUcERRUUEG8igiAOOjoCMFVEsDIoK2AfkIaKOg6OIisr74Xuja9a89+bN/rXXPues852zzwfACAyWSDNRNYAMqUIeEeCDx8TG4eQuQIEKJHAAEAizZCFz/SMBAPh+PDwrIsAHvgABeNMLCADATZvAMByH/w/qQplcAYCEAcB0kThLCIAUAEB6jkKmAEBGAYCdmCZTAKAEAGDLY2LjAFAtAGAnf+bTAICd+Jl7AQBblCEVAaCRACATZYhEAGg7AKzPVopFAFgwABRmS8Q5ANgtADBJV2ZIALC3AMDOEAuyAAgMADBRiIUpAAR7AGDIIyN4AISZABRG8lc88SuuEOcqAAB4mbI8uSQ5RYFbCC1xB1dXLh4ozkkXKxQ2YQJhmkAuwnmZGTKBNA/g88wAAKCRFRHgg/P9eM4Ors7ONo62Dl8t6r8G/yJiYuP+5c+rcEAAAOF0ftH+LC+zGoA7BoBt/qIl7gRoXgugdfeLZrIPQLUAoOnaV/Nw+H48PEWhkLnZ2eXk5NhKxEJbYcpXff5nwl/AV/1s+X48/Pf14L7iJIEyXYFHBPjgwsz0TKUcz5IJhGLc5o9H/LcL//wd0yLESWK5WCoU41EScY5EmozzMqUiiUKSKcUl0v9k4t8s+wM+3zUAsGo+AXuRLahdYwP2SycQWHTA4vcAAPK7b8HUKAgDgGiD4c93/+8//UegJQCAZkmScQAAXkQkLlTKsz/HCAAARKCBKrBBG/TBGCzABhzBBdzBC/xgNoRCJMTCQhBCCmSAHHJgKayCQiiGzbAdKmAv1EAdNMBRaIaTcA4uwlW4Dj1wD/phCJ7BKLyBCQRByAgTYSHaiAFiilgjjggXmYX4IcFIBBKLJCDJiBRRIkuRNUgxUopUIFVIHfI9cgI5h1xGupE7yAAygvyGvEcxlIGyUT3UDLVDuag3GoRGogvQZHQxmo8WoJvQcrQaPYw2oefQq2gP2o8+Q8cwwOgYBzPEbDAuxsNCsTgsCZNjy7EirAyrxhqwVqwDu4n1Y8+xdwQSgUXACTYEd0IgYR5BSFhMWE7YSKggHCQ0EdoJNwkDhFHCJyKTqEu0JroR+cQYYjIxh1hILCPWEo8TLxB7iEPENyQSiUMyJ7mQAkmxpFTSEtJG0m5SI+ksqZs0SBojk8naZGuyBzmULCAryIXkneTD5DPkG+Qh8lsKnWJAcaT4U+IoUspqShnlEOU05QZlmDJBVaOaUt2ooVQRNY9aQq2htlKvUYeoEzR1mjnNgxZJS6WtopXTGmgXaPdpr+h0uhHdlR5Ol9BX0svpR+iX6AP0dwwNhhWDx4hnKBmbGAcYZxl3GK+YTKYZ04sZx1QwNzHrmOeZD5lvVVgqtip8FZHKCpVKlSaVGyovVKmqpqreqgtV81XLVI+pXlN9rkZVM1PjqQnUlqtVqp1Q61MbU2epO6iHqmeob1Q/pH5Z/YkGWcNMw09DpFGgsV/jvMYgC2MZs3gsIWsNq4Z1gTXEJrHN2Xx2KruY/R27iz2qqaE5QzNKM1ezUvOUZj8H45hx+Jx0TgnnKKeX836K3hTvKeIpG6Y0TLkxZVxrqpaXllirSKtRq0frvTau7aedpr1Fu1n7gQ5Bx0onXCdHZ4/OBZ3nU9lT3acKpxZNPTr1ri6qa6UbobtEd79up+6Ynr5egJ5Mb6feeb3n+hx9L/1U/W36p/VHDFgGswwkBtsMzhg8xTVxbzwdL8fb8VFDXcNAQ6VhlWGX4YSRudE8o9VGjUYPjGnGXOMk423GbcajJgYmISZLTepN7ppSTbmmKaY7TDtMx83MzaLN1pk1mz0x1zLnm+eb15vft2BaeFostqi2uGVJsuRaplnutrxuhVo5WaVYVVpds0atna0l1rutu6cRp7lOk06rntZnw7Dxtsm2qbcZsOXYBtuutm22fWFnYhdnt8Wuw+6TvZN9un2N/T0HDYfZDqsdWh1+c7RyFDpWOt6azpzuP33F9JbpL2dYzxDP2DPjthPLKcRpnVOb00dnF2e5c4PziIuJS4LLLpc+Lpsbxt3IveRKdPVxXeF60vWdm7Obwu2o26/uNu5p7ofcn8w0nymeWTNz0MPIQ+BR5dE/C5+VMGvfrH5PQ0+BZ7XnIy9jL5FXrdewt6V3qvdh7xc+9j5yn+M+4zw33jLeWV/MN8C3yLfLT8Nvnl+F30N/I/9k/3r/0QCngCUBZwOJgUGBWwL7+Hp8Ib+OPzrbZfay2e1BjKC5QRVBj4KtguXBrSFoyOyQrSH355jOkc5pDoVQfujW0Adh5mGLw34MJ4WHhVeGP45wiFga0TGXNXfR3ENz30T6RJZE3ptnMU85ry1KNSo+qi5qPNo3ujS6P8YuZlnM1VidWElsSxw5LiquNm5svt/87fOH4p3iC+N7F5gvyF1weaHOwvSFpxapLhIsOpZATIhOOJTwQRAqqBaMJfITdyWOCnnCHcJnIi/RNtGI2ENcKh5O8kgqTXqS7JG8NXkkxTOlLOW5hCepkLxMDUzdmzqeFpp2IG0yPTq9MYOSkZBxQqohTZO2Z+pn5mZ2y6xlhbL+xW6Lty8elQfJa7OQrAVZLQq2QqboVFoo1yoHsmdlV2a/zYnKOZarnivN7cyzytuQN5zvn//tEsIS4ZK2pYZLVy0dWOa9rGo5sjxxedsK4xUFK4ZWBqw8uIq2Km3VT6vtV5eufr0mek1rgV7ByoLBtQFr6wtVCuWFfevc1+1dT1gvWd+1YfqGnRs+FYmKrhTbF5cVf9go3HjlG4dvyr+Z3JS0qavEuWTPZtJm6ebeLZ5bDpaql+aXDm4N2dq0Dd9WtO319kXbL5fNKNu7g7ZDuaO/PLi8ZafJzs07P1SkVPRU+lQ27tLdtWHX+G7R7ht7vPY07NXbW7z3/T7JvttVAVVN1WbVZftJ+7P3P66Jqun4lvttXa1ObXHtxwPSA/0HIw6217nU1R3SPVRSj9Yr60cOxx++/p3vdy0NNg1VjZzG4iNwRHnk6fcJ3/ceDTradox7rOEH0x92HWcdL2pCmvKaRptTmvtbYlu6T8w+0dbq3nr8R9sfD5w0PFl5SvNUyWna6YLTk2fyz4ydlZ19fi753GDborZ752PO32oPb++6EHTh0kX/i+c7vDvOXPK4dPKy2+UTV7hXmq86X23qdOo8/pPTT8e7nLuarrlca7nuer21e2b36RueN87d9L158Rb/1tWeOT3dvfN6b/fF9/XfFt1+cif9zsu72Xcn7q28T7xf9EDtQdlD3YfVP1v+3Njv3H9qwHeg89HcR/cGhYPP/pH1jw9DBY+Zj8uGDYbrnjg+OTniP3L96fynQ89kzyaeF/6i/suuFxYvfvjV69fO0ZjRoZfyl5O/bXyl/erA6xmv28bCxh6+yXgzMV70VvvtwXfcdx3vo98PT+R8IH8o/2j5sfVT0Kf7kxmTk/8EA5jz/GMzLdsAAAAgY0hSTQAAeiUAAICDAAD5/wAAgOkAAHUwAADqYAAAOpgAABdvkl/FRgAAGb5JREFUeNrsXXd8VFXafm+dmumTSWbSKwmEkEIIJWBCkaYIsiAiKuuyuLqNb/dbde2uruXH9/kJW9C14Mq6oChNCDUgMSAQkpDeey+TTJ+5c8v3RyAwhRQ2StB5fvxBZu45M+fc577v8z7n3DsIx3Hggw8TD6hvCnzwUdMHH3zU9OHOB+6bgjsa58+c7GxrTkhJj5oU74uaPkwgVJYUnT9zsrO12ZfQfZhYIEiSxxdg+A8w+922IXEAHQaqottW0GKu6LLVdNteWR6cGSnzsc2H20zNL0p7H/iglmGvv7I1p8NHze8IDE2fPXGEIMjZ8+9GEMSX0IfDv/P7buQlAJAY4uPQdwUEGdD35Z0+PiZeMgz9vy8/XVJw6ccVNQkfEb9HYBg2K2uhcWBgjK3wNY9uFonFPy5q+vA9w26z0bTzyqXzzQ316fOy1JrAmvJSw4A+ZWaGoV9fnH8hLjFJrQm0ms1Fl85zHJsyM8NsMpqNhqDQcKvFXHL5YmBQiL63u7OtNWvZCpLkAcCAvu/y+Vyl2n9a2iwA6O5sL79S4CeRJqfPQRCkrOhyV3treMyk8KhYX4Xuw3Ah0GoxcxyH4djf3nylr6fLbDLs/ef7FpPJ6aS+2vuv8isFALDv050RsXEURdVVVdhttvfefr2hppKh6RNf7Tuw+2On01lTUbrr3W0A0NXRdvzgXl1oeG1l2dkTRzrbW08d3j8pYVp7S5PJMHA6+6C+tzssKra86PKt7dPwUfPHApvVIpHKpqXNWrrqgdDIqJwjB5JmzI6dMtVsNKg1gVlLVzAMAwDtLY35eV+nz50/eVpKUGj49Nl39XZ1+UllMzIyg8Iip8+e99hv/mAc6AeAK5e+7e/r9fOTSGWK2ooyu9XaUF3ZVFt9z5r1Epm8p7PjYu4ZkVi8bPWDt1Z4+aj5YwGKIEPBKyg0gqYZAKBpWij2AwDK4WAZBgB+9tunmupqtr7w+9LCfABwUg4enw8AdpsVx3EAMJtNEpkcAAb6euVKNQDEJSY/uOnJsKiYNRs3f33iyNuv/LG9pWnNxs1RcZP/8sZLB3Z/zLKMj5o+3BRO2tnf1z1oJNVVlqWkzwYAfXdXZ1szwzCtTQ12m81us5qNxieffikhZUbOkQMAYDYaKMoBAFaLxWwyDjYf0OsBIDQqpqGmUhcaHhQaTtN0Q22VUu3/hz9t5Vgu/9zZzraWFQ88/Mc33rl87huLyVRbUTrQ3zcOZVBll622195upPqstNFOYwgiF2L+YjJOI0gNHlu9ZnOyBjvtZDgCQwQEKiIxHEUAQETe4lXBsJzJwTgZDkVBSGACYsz9mBxMu4HqMlMWigFARCSqEhJaKSkTjKoorO6xtRoovZWmaJbAUDEPVYuIOI1ARGKjaV7eaS1qt7QbqX4rQ2CIWoyHy/mpIWJ/MfGdUlMbHKbRBR/e+ymG4amz58ZMngoAGYuWHvlyT9KMWQqluq+7U9/bXVxwsbq8RCKTr97wWFdHm9PpNA4M9HR2MDRNUXZDv763s4Pj2MqSohkZmS0NdX95/UX/QG3anEw+X5D95Wfa4JDpc+ZNmz6zpODSpbyv5Ur1Az97QuQn2ffpzkX3rpZNV47B7xqSqHaa3X2l57Wjbe0Gp43yrlwRBPz46Lxov3dWRoQreMP0a7AxW/Y3HC7v7zMzQ/4lggCBISIeGigl9Fa6c4C+scl9ibJ9P510sw5bDY7njjTnVBt7zLTDyXEcIAhgKEgEaKJW+OKS4HkR0uGH+kVx3/+ebi/rtJnsLMt6GRqfQHasC3s4WeNlOA7mlaMtB0r07Qan3ellcjAURDz04/VR9yUovH56u5H674ON2eUDA1bWS3MMwhTkL+ZotszToWMRZrve3VZVemXp/etm3rVgNMc31dXIFEqp/PqXHND34TgulkidFEWQJMuyLY112qBQgiStFjNJ8liWZRiaIEgOOJZlOZbDCcJ6La33dHUIBEKxRDooZ3s6O0IiogZ77mxrQTHMP0ALAE6KwnEcQdFboabeSiufyR9lMxKH9x+M3JCi9vrumTrDPe9Vme3smC7rm1GT4biVH1R+VWoYvs6bouPn/SZBwvMSuswOZuNn1XvzDSN+h/lxficfn+z24ieXezbvrrdRI5eZH66P2Jjm7/Yiy8E7ue1PH2im6JEnIVRJnHpycqSS/x1R804Sx0P/kwlwHjHaC5aiYeOuuqI2s+dbLQOOJTsqx8rLm4FmuZjXCg+VGEb0H0rb7GEvX7ZQ7oqbA7jno/LR8BIAPDmR12B89JO60fASACK8UeqNnNb/+mJUvASApj7ntLeKjXZ6wjLGajFfPne2vbnp+6MmioBChI2+JcPC4583eL6++fN6OzVu9xut+qiyvoca5cH9FnbJexVuL35woetMhWWUPYTK3VXKE3sb2FGPJkhGuivLLuvzX7WOachmOzvj/0rYiXrLFu10njpy4NTh/d/1B7kI/0gVv2PATOAgIFCZEJMLcRGJoQgY7UzbANVndg9IBS2WPotTKbqu3y0Uk1Nl9CpSMRRYDtixBNN2I3Wo2Eu0I3DgEyjDclaH+wnMrTG3GR06yXWG7crv8exBIkQ1friQxFiOs1Ks2cFaHCxFs7EagVvMruy0e7gwoBBjCiFOYAjNXm1ud7I8AgmSkl6Y7W3IYj7qx0dpFow2xuF0H0Vlh+Nwhf6eeMUEpKZEJp+/fGVVyZXvlZp7N8bYKFYrJUnMi1z9JL/nkV11NyZWJw0XW8xLJsmHXslvsXhO9LpUxQuLgkMVPIbjanpspR22S82mz6/o3cogTzyf3exJi62rQn4xK4CPowDQ1G+f805pa79LP1tPt7+9Inzoz0a9e9B9ebnuhYXBXuwVhnMbt4VinAzndlVc/K+EaTqRF5HDsG7zZnWy3za4ax6NBN/zaPS8SOlQq9dPtr2c3eamWLbndo4vNQf0vRzLcQAtDXUhEVFypepqfdnU0NPZkTRj1tCRxZcv8ni82CmJAKDv60EAWJZtaagPjYqWK1QAYDGZMOxqgrWYjBUlRQkpaTwef3yp6TKVGjEZpuB75SUAbEhVhyjdo0KD3nHjn4Ue6lMtwXc+GD1JIxAQqJjEknTiDanqbasilsbLRvxyOdXuAfiZxdotc7WDvASAUDm/8L8T3dYacmoMroRzj1q/mhPo9eMIDEFd+/IUuBoJ4ZWXAOA5b982mdwuVBSFy7+fOsTLwVYv3h38iwz34qmg2TK+Z7quqmLbn184//XJpvqa7a+/MOioXz7/TUVxock48OWuDwdL7N0f/l3f011ZcmXfvz4CgPqqim2vPX8x90xzfe32P19tBcABcADQWFt9+ughm9XyxT/f7xjvnfZjMwUD/Ny9N6PdJcvrre6BUCslvO52s1Ajp/ZeC+2mCn43T+t2jEpEyIQuErm133njn54GarfZOcrxYqj7GpvZwY5eBVZ22dxeCVGQOo+kDwC/nBPg4Sqw7Lg+IiBlZoZSExATn3Dv2g0ZCxYf2/+51WLOyzmmDQ6dmjIj/9zZxtqqsyeyURS9a/HyFeseriy9UnjhXOqsuUp1QHxi8r0PbJi7cOnB3f8EAILkISgGADnZB2inc9r0mW3NjScOffE9UfNSs/l4VX92pcs/T+Z5GiXuBfKtTq+T4SiaczP/5N5ccRHPZRQO2oX0ag8re9l7FadrB+hRUIxPoJirzThgYdZ+XHWpxTSqHOpRaGsk3n31MAUfw9yqTM5NS/znEInEg85i6sx5Epm8rblRIBSSPLKlsf6hzb+Wq9RVJUUJKWmDBweHRTTWVgGASCwGBAGAlPQMnkAAADiODy5aUnaHyj+gqb7m7vt+smD5qu9QawJAn9X56L9qc6qNVuo2l4gsx7lZ2wwDj+6uGcrm14OrmR7mYpgcKDxX55Ic67qprO2VPALRSonpIaI1SaqlcXKvq0oEioh5aD/tkhn2FvbvLewX89FQBZkR4bdyqnJBjMyrT+4hJcaWpMb9BNA0LRL7AUBZUT7J4+tCwnq7u+RKtcr/aswmefzyooK4hCQA6GxvvXvFagBgaFos9gOA8uKCweYMwwzuBaFpp5OmpiRNv3rKGMZmsw4eM87UNNqZ6FcL+y0sTEhwHHx8vm+srR6fGfCPb7wU6Q4n19BLNfRSnxX0Exgk6ARb7wvLjHRfUpofK9lb0O/V4ilrt5e123d80yPiIVkxku2rI0JlvBGut9s6gSiKnMk+qAsNb2tqmL9shVAknpN199/efDk8epJaE5i55J61P318z0c7Th054LBbJyemJCSnDV4hp47sD9AFtzbWL//JervNWlNe0tnW0q/vvfeBDZ/s2NZUVyuTK+YuWlZXVXH2+Fe/e/mtcaYmxXAp/1M8YXl5y0gOEi2Mk5yoMA4rHqCg2Za1rWJzhnrH6sgb3/poXVR2+WXLsCsIFgd3qMRwtKLw04ejVycqJ+xU8HgCVUCgVK5Inzuf5PEAIGPhkvDo2PaWpslJqTy+gMcX/Ow3TxVeOieVRcTEJ1xVNQKBWqMdauVw2Ocvu4/jOBzDQ8Kjfvvcq8WXL0TExCtUagDwDwwcf615pLy/ttsBP0Qcfzx+fZoCG0U2fTe3x01Hikms+aXkKH/eyOKYhkc/rXNTuhMHTifVUFsVGhGdmJo+yMtBBIVFpGVkDmVhnCCmz5o3xEvK4WisrQ6Pjh1qxePxtcGhupAwP6kMAER+kpl3LdRodQCgUKlDI6LHn5o7zne6vRekIH6SLN80W71ptvqxWepNc9QqP2ziE9ErN3atj+l7ffory3XTggV+AnSYva2vnnBfvFEI8Jpnk878Ou6BFHmIkiDxmza22Nn9pfqJOS0tDXXBoeHtLU1Oihp9q6a6mqCw8JaGWpr+vtdOryf0olari08kw+ueS3bzfUrarb0my+2aXASBZxdrxbzhoh/LcOnh3mW4lI89vzD4+YXBANBmoL4q1793rqug2d3fKe+0eW0+L1I66Ec6aDav0bSvWL+noLfH5L5C9k2Dae001U0jwU1YjQB813fxhUXFRMTEAcCIt0PYbTaO43h8PoqikZPio+OnjKbVYBlkt9sIkiQIcjyp6eZQTgkUePqR1NjtjJvFpxG3fiGI+9nCMPjT4pBxOU86Kbl5ZsDmmQHbc9t/vdfFKzbaRtiSzcPRrChpVpT0nZXhSVuvFLe6ULnTcD0mCTy2y9ic3tO90c64eVkIAti43jCOoti1nkfo9lLemfNnTm3a8rRcqUKvbWMbzU0UJqPx47/9T2hkzIoHHh63hM5wnNtSr1fXb8Rv5zmbzE3swxEtdwJDcddrg2Fg3LfkPDknEHcVKQ56tJcfisCG6e4B0nTDuDR+HotnvQ6v81HUYXGbfwJDbtf90Mkz5vB4pM065vQokckmJST163vHU2t6zkGfhb4Fp81zqaO+1+EWay0Us+FfNYeKB0aImgASPuZmHn1e3De+p8FTdY4pL3hEdrhxCSc1WOTWvcHKvnGq1aMJ/Gqv+x6uQOk4b3rnOC7/3Nkb87Kh30UWMzQ9GJ8EQqFUoeQLhJTDS1nsKVX7+3qGIqtEJr9xMd1kNLh1MqDv8/xiwyV0FEEIDLlxwbey026wMVLBVXIUtpqfOdxc1Gwdfvwzw/wQxMX0tjq4yW8UbsnUBkvJuj77iSrD6WrjKLc/Tg4UdBpc6uUn9jREqfg329DebaYutZiSdGKtxKWgzq7S59WZ5sfIpulEQgIlMBRBrt7I8asv610NdXCz9A12esv+xlg1f3a4JFzJ9xcTgzeQOFn2YpP57TMd7or2hr3Mcf5CpRjrddWjzx5qPVrRvypRGaMWWJ1sfrP5n5d6Ojx2uiyNl48vNS/knv5857sdrc2RkybHT03KO31c39ONIMjcRcskUlldZXlJ4cWWxvpZdy1MmZkBgJw7fby/r4/j2PU//yXLsPs+3QkcpwsNK/g2L25q0oLlKwGgs63lwtkcnCDsNuuie1f7SWW08/oicF7OcZPRYLWYQsKjUmfNZRjm7IkjNosFgOPxBSr/gPrqcoVakz43q6airPBC3tL71ynV/l60ZpiSLG27vgHM4eTC/1SwIFZic7JFrda2AedolhwTAoUSAWqwuiSn2m7qyT2NtzCbf1ygO1VZ6SJ2abjrnQqVH5YSIorx56tEhN3Jtg5QZZ3W2h6HycZyHFQ9P9Wtn7Uf1Zps7GvHOhAEcAxQBEEQYDmgac4zvYa7bmGp6LR9dL73mlwDDEUGVTLDcrQ3UTojzOXeqcdna1492u52TG6tJbd2uHSJYfB0lm58qRmgCwqNjA6PnuSvCcw5cqCxrvr+hx779P2/Ht23Z/6ylbkns1ese6Svp4thGJZl7VZLgC54VuaiD7e9derwgQXLV4olkotnT2cuvTc0MuaDbW8lTk9XKNV7dr6bufieqSkz9ny0Y/eHf9+05Rnsmjw6ffRgZcmVTVueMQ70//WNl8KjJ1WWFNZWlG7a8kxpwaW9uz747XOv5eUc6+/rnbdoWX9fD4phN94W4kLNDanqp9paXAK1hfnc20LI8Hg4TbX9TPe4zGZWtCxIQbTq3Xdj9JqYY2XGY2VeXHQMhSDXkMmw3JB85Dhw0iMk7T/Md+HE5bbrHGJZGH5zB4HDxjSXW4teXhyy82KP5xCGx5bMAK2UHF9qyhUqP6l8SlIqADTUVitU6rqq8pj4KSpN4IXcHJUmUK5UDe6UoxwOgiQjY+PlStXUlHSDvg9F0dCIqM62FrUmEAAiY+IYmmluqEUApqbMAIBF967+x9uvD7qeg/XWlUsXMubfjeO4QqWOiI0rK8oX+0n4QhEAUBQVoA2SKZSrNjz273/8BQAIgliycg3u+ijG68nrN3O1ask4PGfmjWWhGunI/ZAEQozi077dkkCO5UvxCETgemejwc44R13ZpEeKViW4LOeUdIyhGnh+cZBSiLuVSmVPTxuTH7wiUfbm8rBxL27MJgPtpK4Z6XaxnyQ5fc78ZSsTU9M5lm1tui52CZIkSJKmnQDAcazYTwoAHMsOFek4QQjFYpLHs5ot1zTlwKBkxHF8yM83m6+KMYvJxHFccvockUicezLbbDKueeTnABCgDZIr1bve3SYSSxQq/5ta7jwcKXs6USa8qWuokeI71oZJXQ+gPewkIYnVPZcUqiSGKWxnRYhqnp22IFY6ojOlk5C1LyQFykZLz2A56VaYVHbbRiNFUBRWJ8vP/zrBXb+aRuUJiHjI2/eHPLsgyEvdysOaXkxZPFk64nKURIC+eV/wlxsnod9BaS6WyHq7u7K/3FNXVT4rc2FezrHjB/aezj7YUFM5d+HS/r7uz3a+e/bEkerykp6ujrKiy+0tTTartbq8pL6mwmo2tzQ1VJZcsZhMJqPhyqULRRfP6ULClf6a/f/+uKr0yomDX6TPm087nWVFBaUFF80m4113L7uQe7qiuPBi7hkEgRkZWU11NV0dbSaDwT9Qq7imKWdmLvzm1DGVJgAAaJresfXVwefbAAD20ksvXZ9fEntiTkCXmeo2UzTLYSgi5KEBUjwzRvLWipC/ro6YEeqXFSsx2ugpQcIpWsHkQP4zC3R+PHfekBj6xJxAmRBtN1IOmgUEcAzx46PhKnJtsmLn+qin5gdJBXhWtLTV6JiiE0zRCiYH8F9dFuwvJr1Z5fjvMrXhKrJebzPaGU+Fh6IgEaAJWv5TC7V/XR3Jc61jAiXk4nipRoIDwmEYgiCAIIAiCIYhfBJRiPBJGt5P09VfPjbpken+np+eESGZohUIeAiKcggCCAoIAiiKEBgi5KH+fnhikPD3WYGfb4ydHS65mfdHYMhDKeqH0lQ8HCxOmuE4QABFEfxaJymhomcXafc8Ejvn5p14RfHlC33dXdHxCcFhEcMfyecLNFpdU111oC4kPjFZFxpeXVYskcmj4qb4SWUJyWnV5SU4jk+aMs1qMUvlCv8ALZ8vwEkiOCxSIpVhOB6oC1aoNTTlEIrFMoUqMCh4WtrMztYWfW9PQnJa6qy5FEU5KUdgUIhCpY6MjddodQ01VRxwS1auFQhF+t6e7o42AGhtqj+dfUijC5YplDK5gqadKTPnoCjKcVxHS1NweKRMoYQbb/b1Yu5zHDoeri/LcQiMzwNHOQ66zVSv1TlgowFAQGBKIS4X4BL+2KTI4GZN/JaiE8txDAsYCv/h5IzLtNxBN/u+/86bd929PGrSZAD4cPvWxNQZyTNmX/72Gx6fP7jF6aarQaPx/MbLO7xlIAho/EhPK3uswP+DlIkiCIpNmGm5c55SOjU57eThfRXFhQRBZi5ervIP3P76i2FRMUtWrhnO1/ThTkRNRWlna+vwqW/iIC0jM25qcmNdtSZQ6x+oA4CVDz4aFBZxs8SB+H6j8g5FRXHhwT2f2KwWbXDoTx7ZNPjQth8SfFHzjkRpYf6hz3bZbdbgsMg1j/588PFDPmr6cJtxJf/bw3s/ddjtoZExax7ZNPgoLB81fbjNKPg2L3vfbsrhiIqbfP9DjwlF4h/qSH3UvJOQn3f26IHPnBQVOyVx1UM/5fMFP+DB+qh5x+DC2ZwTh750Op3xU5NXrt944/09Pmr6cNtw7vSJU4f30ww9JSn1vnWPECT5gx+yj5p3AHJPZp85eohhmMTUGfeufRjHfxRnzUfNiY4zx746e/wwy7JJabOWr3kIw7AfycB91Jy44Dju1OH935w6CgCps+YuvX8div6IfrHEtxo0QcEwzNfHvjp35iSGYdOmz1y8cs2d8ou8Pmr+8KnZ19OFYTiCIIPPbPmxwUdNHyYofL+25sMExf8PAFMuO5+sPB3cAAAAAElFTkSuQmCC '
-						+	'				</w:binData>		'
-						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:244.5pt;height:272.25pt">		'
-						+	'					<v:imagedata src="wordml://'+$4+'" />	'
-						+	'				</v:shape>		'
-						+	'			</w:pict>			'
-						+	'		</w:r>				'
-						+	'	</w:p>					'
-*/
-//					return'<img src="'+addEpubPath(u2)+'" style="max-width:100%" alt="'+$4+'" />'
-//					return'<div class="forImage"><object data="'+addEpubPath(u2)+'"'+t2+s2+' >'+$4+'</object></div>'
 				}
 			);
 //			console.debug('fromServer 1: ', txt);
@@ -511,11 +433,13 @@ function pushHeading( t, pars ) {
 //					console.debug( $0, $1, 'url: ', u1, 'ext: ', e );
 						
 					let png = itemById( specifData.files, fileName(u1)+'.png' );
+					imageIDcount++;		//count up image ID
 					
 					if( opts.imgExtensions.indexOf( e )>-1 ) {  
 						// it is an image, show it:
 						
-						imageIDcount++;		//count up image ID
+						
+//						console.debug('imageIDcount2',imageIDcount);
 						
 						// if the type is svg, png is preferred and available, replace it:
 						if( t1.indexOf('svg')>-1 && opts.preferPng && png ) {
@@ -524,25 +448,23 @@ function pushHeading( t, pars ) {
 						};
 						let i1 = hashCode(u1)+'.'+extOf(u1);
 						pushReferencedFiles( i1, u1, t1 );
+//						console.debug(u1, t1);
+						imageLink.push({id:imageIDcount,url:u1,type:extOf(u1)});
 						
 						d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
 						+	'			<w:pict>		'
-						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:222pt;height:57.75pt">	'
+						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:224pt;height:57.75pt">	'
 						+	'				<v:imagedata r:id="rId'+imageIDcount+'" o:title="'+d+'"/>	'
 						+	'				</v:shape>		'
 						+	'			</w:pict>		'
 						+	'		</w:r>			'
 						+	'	</w:p>			'
-//						d = '<img src="'+addEpubPath(u1)+'" style="max-width:100%" alt="'+d+'" />'
-//						console.debug('d1', d);
-						//						d = '<object data="'+addEpubPath(u1)+'"'+t1+s1+' >'+d+'</object>
-//						console.debug('e2',e);
-						
 						
 					} else {
 						
-						imageIDcount++;		//count up image ID
+						
+//						console.debug('imageIDcount3',imageIDcount);
 						
 						if( e=='ole' && png ) {  
 							// It is an ole-file, so add a preview image;
@@ -550,23 +472,22 @@ function pushHeading( t, pars ) {
 							t1 = png.mimeType;
 							let i1 = hashCode(u1)+'.'+extOf(u1);
 							pushReferencedFiles( i1, u1, t1 );
+//							console.debug(u1, t1);
+							imageLink.push({id:imageIDcount,url:u1,type:+extOf(u1)});
 							
 							d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
 						+	'			<w:pict>		'
-						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:222pt;height:57.75pt">	'
+						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:226pt;height:57.75pt">	'
 						+	'				<v:imagedata r:id="rId'+imageIDcount+'" o:title="'+d+'"/>	'
 						+	'				</v:shape>		'
 						+	'			</w:pict>		'
 						+	'		</w:r>			'
 						+	'	</w:p>			'
-//							console.debug('d2', d);
-//							d = '<img src="'+addEpubPath(u1)+'" style="max-width:100%" alt="'+d+'" />'
-//							d = '<object data="'+addEpubPath( fileName(u1) )+'.png" type="image/png" >'+d+'</object>'
+
 						} else {
 							// in absence of an image, just show the description:
-//							hasImg = false;
-//							d = '<span>'+d+'</span>'  
+//							hasImg = false; 							
 							d = '<w:p w:rsidR="00BC2601" w:rsidRPr="00E5017E" w:rsidRDefault="00E5017E" w:rsidP="00E5017E">'
 									'<w:r>'
 										'<w:t>'+d+'</w:t>'
@@ -574,50 +495,50 @@ function pushHeading( t, pars ) {
 								'</w:p>';
 						}
 					};
+					
 				return d
 				}
+				
 			);
 
+		// leere Container entfernen
+		txt = txt.replace(/<div> <\/div>|<div\/>/g,'');
+		// alle Container <div> / </div> entfernen
+		txt = txt.replace(/<div>|<\/div>/g,'');
+		//Externe Links entfernen
+		txt = txt.replace(/<a href=[\s\S]*?>/g,'');
+		txt = txt.replace(/<\/a>/g,'');
+		//Betonung entfernen
+		txt = txt.replace(/<em>|<\/em>/g,'');
+		//> ([0-9]*)
+		// alle Zeilen umwandeln
+		txt = txt.replace(/<p\/>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t/></w:r></w:p>');
+		txt = txt.replace(/<p[\s\S]*?>/g,'<w:p w:rsidRDefault="00F717C9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+		// hiermit wird <p>, <p class xxx> gefunden und ersetzt
+		txt = txt.replace(/<\/p>/g,'</w:t></w:r></w:p>');
+		// Aufzählungen filtern und umwandeln
+		txt = txt.replace(/<ul>|<\/ul>/g,'');
+		txt = txt.replace(/<li>/g,'<w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:pStyle w:val="Listenabsatz"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
+		txt = txt.replace(/<\/li>/g,'</w:t></w:r></w:p>');
+		// Leerzeilen entfernen
+		txt = txt.replace(/<br \/>/g,'');
 
-// Bilder werden vorerst entfernt
-//txt = txt.replace(/<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>[\s]*<img src=".+?(?=\")"[\s\S]*?style="max-width:[0-9]{3}%"[\s\S]*?alt=".+?(?=\")"[\s\S]*?\/>[\s]*<\/div>/g,''); 
-txt = txt.replace(/<div class="forImage" style="max-width: [0-9]{3}px;"[\s\S]*?>/g,'');
-txt = txt.replace(/<img[\s\S]+?>/g,'');
+		// Tabellen umwandeln
+		// head
+		txt = txt.replace(/<table class="stdInlineWithBorder"> <tbody>/g,'<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>');
+		// Tabellenkopf
+		txt = txt.replace(/<th>/g,'<w:tc><w:tcPr><w:tcW w:w="2265" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRPr="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:pPr><w:rPr><w:b/></w:rPr></w:pPr><w:r w:rsidRPr="006438EE"><w:rPr><w:b/></w:rPr><w:t>');
+		txt = txt.replace(/<\/th>/g,'</w:t></w:r></w:p></w:tc>');
+		// Zeilen
+		txt = txt.replace(/<tr>/g,'<w:tr w:rsidR="006438EE" w:rsidTr="006438EE">');
+		txt = txt.replace(/<\/tr>/g,'</w:tr>');
+		// Felder
+		txt = txt.replace(/<td>/g,'<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>');
+		txt = txt.replace(/<\/td>/g,'</w:t></w:r></w:p></w:tc>');
+		// tail
+		txt = txt.replace(/<\/tbody>[\s]*?<\/table>/g,'</w:tbl>');
 
-// leere Container entfernen
-txt = txt.replace(/<div> <\/div>|<div\/>/g,'');
-// alle Container <div> / </div> entfernen
-txt = txt.replace(/<div>|<\/div>/g,'');
-// alle Zeilen umwandeln
-txt = txt.replace(/<p\/>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t/></w:r></w:p>');
-txt = txt.replace(/<p[\s\S]*?>/g,'<w:p w:rsidRDefault="00F717C9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-// hiermit wird <p>, <p class xxx> gefunden und ersetzt
-txt = txt.replace(/<\/p>/g,'</w:t></w:r></w:p>');
-// Aufzählungen filtern und umwandeln
-txt = txt.replace(/<ul>|<\/ul>/g,'');
-txt = txt.replace(/<li>/g,'<w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:pStyle w:val="Listenabsatz"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
-txt = txt.replace(/<\/li>/g,'</w:t></w:r></w:p>');
-// Leerzeilen entfernen
-
-txt = txt.replace(/<br \/>/g,'');
-
-// Tabellen umwandeln
-// head
-txt = txt.replace(/<table class="stdInlineWithBorder"> <tbody>/g,'<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>');
-// Tabellenkopf
-txt = txt.replace(/<th>/g,'<w:tc><w:tcPr><w:tcW w:w="2265" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRPr="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:pPr><w:rPr><w:b/></w:rPr></w:pPr><w:r w:rsidRPr="006438EE"><w:rPr><w:b/></w:rPr><w:t>');
-txt = txt.replace(/<\/th>/g,'</w:t></w:r></w:p></w:tc>');
-// Zeilen
-txt = txt.replace(/<tr>/g,'<w:tr w:rsidR="006438EE" w:rsidTr="006438EE">');
-txt = txt.replace(/<\/tr>/g,'</w:tr>');
-// Felder
-txt = txt.replace(/<td>/g,'<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>');
-txt = txt.replace(/<\/td>/g,'</w:t></w:r></w:p></w:tc>');
-// tail
-txt = txt.replace(/<\/tbody><\/table>/g,'</w:tbl>');
-		
-//			console.debug('fileRef result: ', txt);
-			return txt
+		return txt
 		}
 		
 		

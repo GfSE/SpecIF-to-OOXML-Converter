@@ -1,0 +1,141 @@
+                    <w:tbl>
+	<w:tblPr>
+		<w:tblW w:w="0" w:type="auto" />
+		<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1" />
+	</w:tblPr>
+	<w:tblGrid>
+		<w:gridCol w:w="2448" />
+		<w:gridCol w:w="2880" />
+		<w:gridCol w:w="1800" />
+	</w:tblGrid>
+	<w:tr w:rsidR="000313F5">
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="2448" w:type="dxa" />
+				<w:shd w:val="clear" w:color="auto" w:fill="DBDBDB" w:themeFill="accent3" w:themeFillTint="66" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:pPr>
+					<w:jc w:val="center" />
+					<w:rPr>
+						<w:b />
+					</w:rPr>
+				</w:pPr>
+				<w:proofErr w:type="spellStart" />
+				<w:r>
+					<w:rPr>
+						<w:b />
+					</w:rPr>
+					<w:t>Characters</w:t>
+				</w:r>
+				<w:proofErr w:type="spellEnd" />
+			</w:p>
+		</w:tc>
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="2880" w:type="dxa" />
+				<w:shd w:val="clear" w:color="auto" w:fill="DBDBDB" w:themeFill="accent3" w:themeFillTint="66" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:pPr>
+					<w:jc w:val="center" />
+					<w:rPr>
+						<w:b />
+					</w:rPr>
+				</w:pPr>
+				<w:r>
+					<w:rPr>
+						<w:b />
+					</w:rPr>
+					<w:t>Stories</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="1800" w:type="dxa" />
+				<w:shd w:val="clear" w:color="auto" w:fill="DBDBDB" w:themeFill="accent3" w:themeFillTint="66" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:pPr>
+					<w:jc w:val="center" />
+					<w:rPr>
+						<w:b />
+					</w:rPr>
+				</w:pPr>
+				<w:r>
+					<w:rPr>
+						<w:b />
+					</w:rPr>
+					<w:t>Times Read</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+	</w:tr>
+	<w:tr w:rsidR="000313F5">
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="2448" w:type="dxa" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:r>
+					<w:t>George</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="2880" w:type="dxa" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:r>
+					<w:t>George Goes to Zoo</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="1800" w:type="dxa" />
+				<w:vMerge w:val="restart" />
+				<w:vAlign w:val="center" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:pPr>
+					<w:jc w:val="center" />
+				</w:pPr>
+				<w:r>
+					<w:t>Indeterminate</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+	</w:tr>
+	<w:tr w:rsidR="000313F5">
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="2448" w:type="dxa" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:r>
+					<w:t>Man with yellow hat</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="2880" w:type="dxa" />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+				<w:r>
+					<w:t>George Rides a Bike</w:t>
+				</w:r>
+			</w:p>
+		</w:tc>
+		<w:tc>
+			<w:tcPr>
+				<w:tcW w:w="1800" w:type="dxa" />
+				<w:vMerge />
+			</w:tcPr>
+			<w:p w:rsidR="000313F5" w:rsidRDefault="000313F5" />
+		</w:tc>
+	</w:tr>
+</w:tbl>

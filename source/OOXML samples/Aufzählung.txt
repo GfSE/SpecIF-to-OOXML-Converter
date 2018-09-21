@@ -1,0 +1,82 @@
+<w:p w:rsidR="000313F5" w:rsidRPr="002676EC" w:rsidRDefault="005D7890">
+                        <w:pPr>
+                            <w:numPr>
+                                <w:ilvl w:val="0" />
+                                <w:numId w:val="1" />
+                            </w:numPr>
+                            <w:ind w:left="1080" />
+                            <w:rPr>
+                                <w:lang w:val="en-US" />
+                            </w:rPr>
+                        </w:pPr>
+                        <w:r w:rsidRPr="002676EC">
+                            <w:rPr>
+                                <w:lang w:val="en-US" />
+                            </w:rPr>
+                            <w:t>Dr. Seuss' "The Foot Book"</w:t>
+                        </w:r>
+                    </w:p>
+                    <w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+                        <w:pPr>
+                            <w:numPr>
+                                <w:ilvl w:val="0" />
+                                <w:numId w:val="1" />
+                            </w:numPr>
+                            <w:ind w:left="1080" />
+                        </w:pPr>
+                        <w:r>
+                            <w:t xml:space="preserve">All </w:t>
+                        </w:r>
+                        <w:proofErr w:type="spellStart" />
+                        <w:r>
+                            <w:t>things</w:t>
+                        </w:r>
+                        <w:proofErr w:type="spellEnd" />
+                        <w:r>
+                            <w:t xml:space="preserve"> </w:t>
+                        </w:r>
+                        <w:proofErr w:type="spellStart" />
+                        <w:r>
+                            <w:t>Sesame</w:t>
+                        </w:r>
+                        <w:proofErr w:type="spellEnd" />
+                        <w:r>
+                            <w:t xml:space="preserve"> Street</w:t>
+                        </w:r>
+                    </w:p>
+                    <w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+                        <w:pPr>
+                            <w:numPr>
+                                <w:ilvl w:val="1" />
+                                <w:numId w:val="2" />
+                            </w:numPr>
+                            <w:ind w:left="1800" />
+                        </w:pPr>
+                        <w:r>
+                            <w:t>Elmo's Song</w:t>
+                        </w:r>
+                    </w:p>
+                    <w:p w:rsidR="000313F5" w:rsidRDefault="005D7890">
+                        <w:pPr>
+                            <w:numPr>
+                                <w:ilvl w:val="1" />
+                                <w:numId w:val="2" />
+                            </w:numPr>
+                            <w:ind w:left="1800" />
+                        </w:pPr>
+                        <w:r>
+                            <w:t xml:space="preserve">Abby Cadabby </w:t>
+                        </w:r>
+                    </w:p>
+                    <w:p w:rsidR="00C935FC" w:rsidRDefault="00C935FC">
+                        <w:pPr>
+                            <w:numPr>
+                                <w:ilvl w:val="1" />
+                                <w:numId w:val="2" />
+                            </w:numPr>
+                            <w:ind w:left="1800" />
+                        </w:pPr>
+                        <w:r>
+                            <w:t>Lala Land</w:t>
+                        </w:r>
+                    </w:p>
