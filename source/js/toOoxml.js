@@ -48,11 +48,12 @@ function toOoxml( specifData, opts ) {
 	var ooxml = {
 			headings: [],
 			sections: [],		// a xhtml file per SpecIF hierarchy
-			images: []
+//			images: [],
+			imageLinks: []
 		};
 	
 	var hyperlinkID = 0; 		//variable to count up w:id for hyperlinks
-
+	let imageIDcount = opts.startRID;
 	
 	// The first section is a xhtml-file with the title page:
 	ooxml.sections.push(
@@ -80,7 +81,7 @@ function toOoxml( specifData, opts ) {
 //    console.debug('ooxmlinhalt',ooxml);
 	return ooxml
 	
-function pushHeading( t, pars ) {
+	function pushHeading( t, pars ) {
 		ooxml.headings.push({
 				id: pars.nodeId,
 				title: t,
@@ -334,17 +335,17 @@ function pushHeading( t, pars ) {
 					str = str.replace('\\','/');
 					return str.substring( 0, str.lastIndexOf('.') )
 				}
-				function pushReferencedFiles( i, u, t ) {
-//					console.debug('u',u);
-					// avoid duplicate entries:
-					if( indexBy( ooxml.images, 'id', i )<0 ) {
-						ooxml.images.push({
-							id: i,					
-							title: u.replace('\\','/'),  // is the distinguishing/relative part of the URL
-							mimeType: t
-						})
-					}
-				}
+				// function pushReferencedFiles( i, u, t ) {
+// //					console.debug('u',u);
+					// // avoid duplicate entries:
+					// if( indexBy( ooxml.images, 'id', i )<0 ) {
+						// ooxml.images.push({
+							// id: i,					
+							// title: u.replace('\\','/'),  // is the distinguishing/relative part of the URL
+							// mimeType: t
+						// })
+					// }
+				// }
 
 			// Prepare a file reference for viewing and editing:
 //			console.debug('fromServer 0: ', txt);
@@ -387,14 +388,13 @@ function pushHeading( t, pars ) {
 						t2 = png.mimeType
 					} 
 					let i2 = hashCode(u2)+'.'+extOf(u2);
-					pushReferencedFiles( i2, u2, t2 );
+//					pushReferencedFiles( i2, u2, t2 );
 //					console.debug( $0, $4, u1, u2, t2 );
 					
 					// get the file extension:
 					let e = fileExt(u2);
 //					console.debug('e1',e);
-					imageLink.push({id:imageIDcount,url:u2,type:extOf(u2)});
-//					console.debug('imageIDcount1',imageIDcount);
+					ooxml.imageLinks.push({ref:imageIDcount,id:u2.replace('\\','/'),type:extOf(u2)});
 					
 					return 	'	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
@@ -447,9 +447,10 @@ function pushHeading( t, pars ) {
 							t1 = png.mimeType
 						};
 						let i1 = hashCode(u1)+'.'+extOf(u1);
-						pushReferencedFiles( i1, u1, t1 );
-//						console.debug(u1, t1);
-						imageLink.push({id:imageIDcount,url:u1,type:extOf(u1)});
+//						pushReferencedFiles( i1, u1, t1 );
+						
+//						console.debug('u1',u1.replace('\\','/'));
+						ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:extOf(u1)});
 						
 						d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
@@ -471,9 +472,9 @@ function pushHeading( t, pars ) {
 							u1 = png.id.replace('\\','/');
 							t1 = png.mimeType;
 							let i1 = hashCode(u1)+'.'+extOf(u1);
-							pushReferencedFiles( i1, u1, t1 );
-//							console.debug(u1, t1);
-							imageLink.push({id:imageIDcount,url:u1,type:+extOf(u1)});
+//							pushReferencedFiles( i1, u1, t1 );
+							console.debug('u2', u1);
+							ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:+extOf(u1)});
 							
 							d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'

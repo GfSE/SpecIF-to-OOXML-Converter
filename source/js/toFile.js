@@ -12,10 +12,11 @@ function toFile( specifData, opts ) {
 	if( opts.linkNotUnderlined==undefined ) opts.linkNotUnderlined = false;
 	if( opts.preferPng==undefined ) opts.preferPng = true;
 	opts.xmlImgPath = 'Images/';
+	opts.startRID = 7;
 	
 	var imageType=new Array(),
-		convertedImage=new Array(),
-		imgTemp=new Array();
+		imgTemp=new Array(),
+		base64Images=new Array();
 	
 	
 	for (let i=0, I=specifData.files.length; i<I; i++) {									//filter out .svg images
@@ -38,27 +39,11 @@ function toFile( specifData, opts ) {
 	}	
 	
 	
-if 	(imgTemp){	
-	console.debug('imgTemp', imgTemp);
-	image2base64(imgTemp, function(base64imgs) { 	
-		for (let i=0, I=base64imgs.length; i<I; i++) {
-//			console.debug('bse64img',base64imgs[i].b64);
-			let img = base64imgs[i].b64;													//cut base64 string in pieces of 76 chars and save it in the array 'convertedImage'
-				img = img.replace (/[\S]*?,([\S]*)/g,function ($1, $2) {		
-				$2 = $2.match(/.{1,76}/g);
-//				console.debug('$2',$2);
-				convertedImage.push($2);
-				})			
-		} 
-		console.debug('convertedImage',convertedImage);
-	
-	
-	createOoxml();
-	
-	});
-} else {
-	createOoxml();
-}
+	if 	(imgTemp.length > 0){								// check if images 
+		console.debug('imgTemp', imgTemp);
+		imgTemp = image2base64(imgTemp);		
+	}	
+	createOoxml()
 	return
 
 	
@@ -107,9 +92,9 @@ if 	(imgTemp){
 +	'	<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>	'
 
 // for each image get an Line to link the image into the document
-//console.debug('imageLink',imageLink);			
-for (let a=0,A=imageLink.length;a<A;a++) {
-	file.content += '<Relationship Id="rId'+(imageLink[a].id)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+imageLink[a].type+'"/>	'
+//console.debug('file.imageLinks',file.imageLinks);			
+for (let a=0,A=file.imageLinks.length;a<A;a++) {
+	file.content += '<Relationship Id="rId'+(file.imageLinks[a].ref)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+file.imageLinks[a].type+'"/>	'
 };
 	
 file.content +=	'	     </Relationships>	'
@@ -183,18 +168,24 @@ file.content += '				<w:sectPr w:rsidR="00AE0319">							'
 	+	'			</pkg:xmlData>										'
 	+	'		</pkg:part>'
 
-// picture content section
-if  (convertedImage[0]) {
-	for (let a=0,A=imageLink.length;a<A;a++) {
-		file.content +='<pkg:part pkg:name="/word/media/image'+(a+1)+'.'+imageLink[a].type+'" pkg:contentType="image/'+imageLink[a].type+'" pkg:compression="store">'
-		+'<pkg:binaryData>'
-		for (let k=0, K=convertedImage[a].length; k<K; k++) {
-				file.content +=convertedImage[a][k]+String.fromCharCode(13)+String.fromCharCode(10)
-			}
-		file.content +='</pkg:binaryData>'
-			+'</pkg:part>'
-	}
+// picture content section  -  todo: Bilder nur einfach in Word eintragen
+let ImgIDX = null;
+for (let a=0,A=file.imageLinks.length;a<A;a++) {
+	file.content +='<pkg:part pkg:name="/word/media/image'+(a+1)+'.'+file.imageLinks[a].type+'" pkg:contentType="image/'+file.imageLinks[a].type+'" pkg:compression="store">'
+	+'<pkg:binaryData>'
+	// search image in imageTemp = imageLinks.id 
+	ImgIDX = indexById(imgTemp,file.imageLinks[a].id);
+	console.debug('id', file.imageLinks[a].id,'array', imgTemp);
+	console.debug('ImgIDX',ImgIDX)
+	
+	for (let k=0, K=imgTemp.length; k<K; k++) {
+			file.content +=imgTemp[ImgIDX][k]+String.fromCharCode(13)+String.fromCharCode(10)
+			
+		}
+	file.content +='</pkg:binaryData>'
+		+'</pkg:part>'
 }
+
 
 // document end
 file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.theme+xml">											'
@@ -1330,10 +1321,28 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 				return null
 	}
 	
+    function indexById(L,id) {
+			  if(!L||!id) return -1;
+			  // given an ID of an element in a list, return it's index:
+			  id = id.trim();
+			  for( var i=L.length-1;i>-1;i-- )
+							if( L[i].id === id ) return i;   // return list index 
+			  return -1
+	}
+
+	
+	function imageSlice (f, b64) {
+		b64.replace (/[\S]*?,([\S]*)/g,function ($1, $2) {		//cut base64 string in pieces of 76 chars and save it in the array 'imgTemp'
+		$2 = $2.match(/.{1,76}/g);
+//		console.debug('$2',$2);
+		base64Images.push({id:f.id,b64:$2});	
+		})
+	}
+	
 	
 // 	gets an array of images and converts into base64 strings back into array 'base64Images'
-	function image2base64(files, successCallback) {			
-		var base64Images=new Array();
+	function image2base64(files) {			
+//		var base64Images=new Array();
 		console.debug('files',files);
 		if (files.length > 0) {
 			if (files[0].blob) {
@@ -1342,12 +1351,9 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 					function toBase64(f) {
 						 const reader = new FileReader();
 						 reader.addEventListener('loadend', function(e) {
-		//							console.debug('reader',e);
-									base64Images.push({id:f.id,b64:e.target.result});
-									if (base64Images.length === L) {
-										console.debug('base64Images', base64Images);
-										successCallback(base64Images)
-									}
+//									console.debug('reader',e.target.result);
+									imageSlice(f, e.target.result);
+//									base64Images.push({id:f.id,b64:imageSlice(e.target.result)});									
 						 });
 						 reader.readAsDataURL(f.blob)
 					}
@@ -1358,13 +1364,16 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 			}
 			else {
 				console.debug('Keine Dateien geladen');
-				createOoxml();
+				
 			}
 		}
 		else {
 			console.debug('Keine Dateien geladen');
-			createOoxml();
+			
 		}		
+		
+		return base64Images;
 	}
+	
 	
 }
