@@ -1,2 +1,5 @@
 # SpecIF-to-OOXML-Converter
-Creates a document in OOXML format for a given system specification in SpecIF format. 
+Creates a document in OOXML format for Microsoft WORD(R) for a given system specification in [SpecIF](http://specif.de) format. 
+
+## Acknowledgements
+This work has been sponsored by [adesso AG](http://adesso.de), Berlin.
