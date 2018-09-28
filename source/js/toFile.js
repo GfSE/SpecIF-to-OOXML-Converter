@@ -9,43 +9,40 @@ function toFile( specifData, opts ) {
 	if( !opts.metaFontColor ) opts.metaFontColor = '#0071B9';	// adesso blue
 	if( !opts.linkFontColor ) opts.linkFontColor = '#0071B9';
 //	if( !opts.linkFontColor ) opts.linkFontColor = '#005A92';	// darker
-	if( opts.linkNotUnderlined==undefined ) opts.linkNotUnderlined = false;
-	if( opts.preferPng==undefined ) opts.preferPng = true;
-	opts.xmlImgPath = 'Images/';
+	if( typeof(opts.linkNotUnderlined)!='boolean' ) opts.linkNotUnderlined = false;
+	if( typeof(opts.preferPng)!='boolean' ) opts.preferPng = true;
+//	opts.xmlImgPath = 'Images/';
 	opts.startRID = 7;
 	
-	var imageType=new Array(),
-		imgTemp=new Array(),
-		base64Images=new Array();
+	var images = [],
+		f = null,
+		pend = 0;		// the number of pending operations
 	
-	
-	for (let i=0, I=specifData.files.length; i<I; i++) {									//filter out .svg images
-//		console.debug('filesid',specifData.files[i].id);
-			let type = specifData.files[i].id
-//			console.debug('id', specifData.files[i].id);
-			type = type.replace(/[\S]*.([\S]..)/g,function ($1, $2) {		
-//				console.debug('$2',$2);
-//				imageType.push($2)
-				if ($2 === 'svg') {
-					return
-				}
-//					console.debug('SVG');
-				else {
-					imgTemp.push(specifData.files[i]);
-					imageType.push($2);
-//					console.debug('keinSVG');
-				}
-			})
-	}	
-	
-	
-	if 	(imgTemp.length > 0){								// check if images 
-		console.debug('imgTemp', imgTemp);
-		imgTemp = image2base64(imgTemp);		
-	}	
-	createOoxml()
+	// create a local list of images, which can be used in OOXML:
+	for (var i=0, I=specifData.files.length; i<I; i++) {
+		f = specifData.files[i];
+		if ( f.blob && ['image/png','image/jpg','image/jpeg'].indexOf(f.type)>-1) {
+			pend++;
+			image2base64(f)
+		}
+	}
 	return
 
+	// 	convert an image to base64:
+	function image2base64(f) {			
+		console.debug('file',f);
+		const reader = new FileReader();
+		reader.addEventListener('loadend', function(e) {
+			images.push( {id:f.id,type:f.type,b64:e.target.result} );
+			if( --pend<1 ) {
+				// all images have been converted:
+//				console.debug('converted images',images)
+				delete f.blob;  // save some memory space
+				createOoxml();
+			}
+		});
+		reader.readAsDataURL(f.blob)
+	}
 	
 	// -----------------------
 	function createOoxml() {
@@ -55,43 +52,32 @@ function toFile( specifData, opts ) {
 			file = toOoxml( specifData, opts );
 		console.debug( 'ooxml',file );
 		file.fileName = specifData.title;
+//		file.fileName = specifData.id;
 		
-/*		//get imagefile extension from specifData.files 
-		for (let l=0, L=specifData.files.length;l<L;l++) {
-			let type = specifData.files[l].id
-//			console.debug('id', specifData.files[l].id);
-			type = type.replace(/[\S]*.([\S]..)/g,function ($1, $2) {		
-			console.debug('$2',$2);
-			imageType.push($2)
-			})
-			
-		}
-*/		
-
-// Dokument begin		
+// document begin:		
 		file.content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-				+	'	<?mso-application progid="Word.Document"?>	'
+				+		'<?mso-application progid="Word.Document"?>	'
 +	'	<pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">	'
-+	'	    <pkg:part pkg:name="/_rels/.rels" pkg:contentType="application/vnd.openxmlformats-package.relationships+xml" pkg:padding="512">	'
-+	'	 <pkg:xmlData>	'
++	'	    <pkg:part pkg:name="/_rels/.rels" pkg:contentType="application/vnd.openxmlformats-package.relationships+xml" pkg:padding="512">'
++	'	 <pkg:xmlData>'
++	'	     <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
++	'	  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml" />'
++	'	  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml" />'
++	'	  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml" />'
++	'	     </Relationships>'
++	'	 </pkg:xmlData>'
++	'	    </pkg:part>'
++	'	    <pkg:part pkg:name="/word/_rels/document.xml.rels" pkg:contentType="application/vnd.openxmlformats-package.relationships+xml" pkg:padding="256">'
++	'	 <pkg:xmlData>'
 +	'	     <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">	'
-+	'	  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml" />	'
-+	'	  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml" />	'
-+	'	  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml" />	'
-+	'	     </Relationships>	'
-+	'	 </pkg:xmlData>	'
-+	'	    </pkg:part>	'
-+	'	    <pkg:part pkg:name="/word/_rels/document.xml.rels" pkg:contentType="application/vnd.openxmlformats-package.relationships+xml" pkg:padding="256">	'
-+	'	 <pkg:xmlData>	'
-+	'	     <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">	'
-+	'	<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>	'
-+	'	<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>	'
-+	'	<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>	'
-+	'	<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings" Target="webSettings.xml"/>	'
-+	'	<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable" Target="fontTable.xml"/>	'
-+	'	<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>	'
++	'	<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>'
++	'	<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
++	'	<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>'
++	'	<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings" Target="webSettings.xml"/>'
++	'	<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable" Target="fontTable.xml"/>'
++	'	<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>'
 
-// for each image get an Line to link the image into the document
+// a line for each image to link the image into the document
 //console.debug('file.imageLinks',file.imageLinks);			
 for (let a=0,A=file.imageLinks.length;a<A;a++) {
 	file.content += '<Relationship Id="rId'+(file.imageLinks[a].ref)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+file.imageLinks[a].type+'"/>	'
@@ -106,23 +92,21 @@ file.content +=	'	     </Relationships>	'
 			+	'	  <w:body>     	';
 
 // Sections Title - Heading1
-
 for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
-			file.content += '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
-                +        '<w:pPr>'
-                +            '<w:pStyle w:val="berschrift1" />'
-				+				'<w:rPr>'
-                +                '<w:lang w:val="en-US" />'
-                +            '</w:rPr>'
-                +        '</w:pPr>'
-                +        '<w:r w:rsidRPr="00997056">'
-				+            '<w:t>'+specifData.hierarchies[h].title+'</w:t>'
-                +        '</w:r>'
-                +    '</w:p>'							
+	file.content += '<w:p w:rsidR="00932176" w:rsidRPr="00997056" w:rsidRDefault="00932176" w:rsidP="00997056">'
+		+        '<w:pPr>'
+		+            '<w:pStyle w:val="berschrift1" />'
+		+				'<w:rPr>'
+		+                '<w:lang w:val="en-US" />'
+		+            '</w:rPr>'
+		+        '</w:pPr>'
+		+        '<w:r w:rsidRPr="00997056">'
+		+            '<w:t>'+specifData.hierarchies[h].title+'</w:t>'
+		+        '</w:r>'
+		+    '</w:p>'							
 }
 
 // Sections ID - plain text
-
 for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
 	file.content += '	<w:p w:rsidR="002676EC" w:rsidRDefault="002676EC" w:rsidP="00997056">	'
 		+	'	                        <w:pPr>	'
@@ -145,9 +129,8 @@ for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
 		
 let t=file.sections.length; 
 file.content += file.sections[t-1];
-//console.debug('sections',file.sections[t-1]);
 
-// letze Ersetzungen 
+// letzte Ersetzungen 
 // Dopplungen entfernen
 file.content = file.content.replace(/<w:p w:rsidRDefault="00F717C9" w:rsidP="00F717F9">[\s]*<w:pPr>[\s]*<w:rPr>[\s]*<w:lang w:val="en-US" \/>[\s]*<\/w:rPr>[\s]*<\/w:pPr>[\s]*<w:r>[\s]*<w:rPr>[\s]*<w:lang w:val="en-US" \/>[\s]*<\/w:rPr>[\s]*<w:t>[\s]*<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">[\s]*<w:r>[\s]*<w:pict>/g,'<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF"><w:r><w:pict>');
 file.content = file.content.replace(/<\/w:pict>[\s]*<\/w:r>[\s]*<\/w:p>[\s]*<\/w:t>[\s]*<\/w:r>[\s]*<\/w:p>/g,'</w:pict></w:r></w:p>');
@@ -168,26 +151,28 @@ file.content += '				<w:sectPr w:rsidR="00AE0319">							'
 	+	'			</pkg:xmlData>										'
 	+	'		</pkg:part>'
 
-// picture content section  -  todo: Bilder nur einfach in Word eintragen
-let ImgIDX = null;
+// picture content section  -  
+// ToDo: Bilder nur einfach in Word eintragen !!
+let imgIdx, startIdx;
+const lineLength = 76;
 for (let a=0,A=file.imageLinks.length;a<A;a++) {
 	file.content +='<pkg:part pkg:name="/word/media/image'+(a+1)+'.'+file.imageLinks[a].type+'" pkg:contentType="image/'+file.imageLinks[a].type+'" pkg:compression="store">'
 	+'<pkg:binaryData>'
 	// search image in imageTemp = imageLinks.id 
-	ImgIDX = indexById(imgTemp,file.imageLinks[a].id);
-	console.debug('id', file.imageLinks[a].id,'array', imgTemp);
-	console.debug('ImgIDX',ImgIDX)
-	
-	for (let k=0, K=imgTemp.length; k<K; k++) {
-			file.content +=imgTemp[ImgIDX][k]+String.fromCharCode(13)+String.fromCharCode(10)
-			
-		}
+	// find the refeneced image:
+	imgIdx = indexById(images,file.imageLinks[a].id);
+	startIdx = images[imgIdx].b64.indexOf(',')+1;
+	console.debug('store image', imgIdx, file.imageLinks[a].id, images[imgIdx],images[imgIdx].b64.length);
+
+	// add the image line by line:
+	for (var k=startIdx, K=images[imgIdx].b64.length; k<K; k+=lineLength) {
+		file.content += images[imgIdx].b64.slice(k,k+lineLength) + String.fromCharCode(13)+String.fromCharCode(10) 
+	};
 	file.content +='</pkg:binaryData>'
 		+'</pkg:part>'
 }
 
-
-// document end
+// document end:
 file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.theme+xml">											'
 +	'			<pkg:xmlData>										'
 +	'				<a:theme name="Office Theme" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">									'
@@ -1272,7 +1257,6 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 +	'		</pkg:part>											'
 +	'	</pkg:package>												';
 
-
 //		console.debug('file',file);
 		storeOoxml(file);
 	}
@@ -1288,8 +1272,6 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 		let blob = new Blob([fileContent],{type: "text/plain; charset=utf-8"});
 		saveAs(blob, xml.fileName+".xml");
 		return
-
-
 	}
 	// Convert arrayBuffer to string:
 	function buf2str(buf) {
@@ -1312,7 +1294,7 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 		}
 	}
 
-	function itemById(L,id) {
+/*	function itemById(L,id) {
 				if(!L||!id) return null;
 				// given the ID of an element in a list, return the element itself:
 //				id = id.trim();
@@ -1320,8 +1302,7 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 					if( L[i].id === id ) return L[i];   // return list item
 				return null
 	}
-	
-    function indexById(L,id) {
+*/	function indexById(L,id) {
 			  if(!L||!id) return -1;
 			  // given an ID of an element in a list, return it's index:
 			  id = id.trim();
@@ -1329,51 +1310,4 @@ file.content += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="
 							if( L[i].id === id ) return i;   // return list index 
 			  return -1
 	}
-
-	
-	function imageSlice (f, b64) {
-		b64.replace (/[\S]*?,([\S]*)/g,function ($1, $2) {		//cut base64 string in pieces of 76 chars and save it in the array 'imgTemp'
-		$2 = $2.match(/.{1,76}/g);
-//		console.debug('$2',$2);
-		base64Images.push({id:f.id,b64:$2});	
-		})
-	}
-	
-	
-// 	gets an array of images and converts into base64 strings back into array 'base64Images'
-	function image2base64(files) {			
-//		var base64Images=new Array();
-		console.debug('files',files);
-		if (files.length > 0) {
-			if (files[0].blob) {
-				for (let l=0, L=files.length;l<L;l++) {
-					var reader = new FileReader();	
-					function toBase64(f) {
-						 const reader = new FileReader();
-						 reader.addEventListener('loadend', function(e) {
-//									console.debug('reader',e.target.result);
-									imageSlice(f, e.target.result);
-//									base64Images.push({id:f.id,b64:imageSlice(e.target.result)});									
-						 });
-						 reader.readAsDataURL(f.blob)
-					}
-					toBase64(files[l]);
-
-				}
-				
-			}
-			else {
-				console.debug('Keine Dateien geladen');
-				
-			}
-		}
-		else {
-			console.debug('Keine Dateien geladen');
-			
-		}		
-		
-		return base64Images;
-	}
-	
-	
 }

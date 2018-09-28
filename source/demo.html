@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>SpecIF to Ooxml</title>
+    <title>SpecIF to OOXML</title>
 	<meta charset="utf-8" />
 	<!--<meta http-equiv="cache-control" content="no-Cache" />-->
 	<meta http-equiv="expires" content="0" />
@@ -20,51 +20,131 @@
 ////////////////////////////////////////////////////
 // This demo app imports SpecIF data from a file and uses 
 // the toFile and toOoxml routines for transformation to Ooxml. 
+// Copyright: adesso AG (http://adesso.de)
+// License: Apache 2.0 (http://www.apache.org/licenses/)
 //
 
-// used by importSpecif to check and manipulate SpecIF data:
-var specif = {
-		check: function( data ) {
-			// check the SpecIF data:
-			var cDO = $.Deferred();
-			// 1. Validate the data using the SpecIF schema:
-			cDO.notify('Checking schema',10);
+var file = null,			// the picked import file
+	importSpecif = null;	// the import routine for SpecIF files
 
-			// Get the specified schema file from the server:
-			get( 
-				"https://specif.de/v"+data.specifVersion+"/schema", 
-				'arraybuffer',	// response type
-				false,	// no authentication
-				function(xhr) { 
-//					console.debug('schema', xhr);
-					switch( xhr.status ) {
-						case 200:
-							// 1. check data against schema:
-							let rc = checkSchema( JSON.parse( buf2str(xhr.response) ), data );
-							if( rc.status!=0 ) { cDO.reject( rc ); return };
+// the demo app:
+var app = {
+	verify: function() {
 
-							// 2. Check further constraints:
-							cDO.notify('Checking constraints',20);
-							rc = checkConstraints( data );
-							if( rc.status==0 ) 	cDO.resolve( data, rc )
-							else 				cDO.reject( rc );
-							break
-						case 404:
-							xhr = { status: 903, statusText: 'SpecIF version '+data.specifVersion+' is not supported by the program!' };
-						default:
-							cDO.reject(xhr)
-					}
-				}, 
-				null
-			);
-			return cDO
-		},
-		put: function(data) {
-//			console.debug('specif.put',data)
-			// no transformation needed in this context
-			return data
+		// initialize:
+		importSpecif = new ImportSpecif(); 	
+		importSpecif.open();
+
+		// get the selected file:
+        file = document.getElementById("importFile").files[0];
+
+		// check if file-type is eligible:
+		file = importSpecif.verify( file ); 
+		if( file )
+			document.getElementById("startButton").disabled = false
+			// user may start the conversion
+		else
+			alert('wrong file-type')
+			// try again
+	},
+	main: function() {
+		var options = { 
+				// If a hidden property is defined with value, it is suppressed only if it has this value;
+				// if the value is undefined, the property is suppressed in all cases.
+				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],  // type is hidden in case of folder
+				hideEmptyProperties: true,
+				// if no label is provided, the respective content is suppressed:
+				propertiesLabel: 'Properties',
+				statementsLabel: 'Statements',
+				done: function() { alert("File is saved according to your browser's configuration.") },
+				fail: function(err) { alert(err.statusText) }
+			};
+		readFile( file, importSpecif.asBuf );
+		return
+
+		function readFile( f, fn ) {
+//			console.debug( 'readFile ' + f.name );
+			var rdr = new FileReader();
+			rdr.onload = function(evt) {
+				fn( evt.target.result )		// import the file as arraybuffer
+					.done( function() {
+						console.info('specif',myProject.value);
+						document.getElementById("startButton").disabled = true;
+						let f;
+						for( var i=myProject.value.files.length-1;i>-1;i-- ) {
+							f=myProject.value.files[i];
+							// add file type:
+							if( f.blob && !f.type )
+								f.type = f.blob.type || f.type || mediaTypeOf( f.id )
+						};
+						// process:
+						toFile( myProject.value, options )
+					})
+					.fail( function() {alert('failure to import the data')} )
+			};
+			rdr.readAsArrayBuffer( f )
 		}
-	};
+	}
+}
+
+// used by importSpecif to check and manipulate SpecIF data:
+var	specif = {
+	check: function( data ) {
+		// check the SpecIF data:
+		var cDO = $.Deferred();
+		// 1. Validate the data using the SpecIF schema:
+		cDO.notify('Checking schema',10);
+
+		// Get the specified schema file from the server:
+		get( 
+			"https://specif.de/v"+data.specifVersion+"/schema", 
+			'arraybuffer',	// response type
+			false,	// no authentication
+			function(xhr) { 
+//				console.debug('schema', xhr);
+				switch( xhr.status ) {
+					case 200:
+						// 1. check data against schema:
+						let rc = checkSchema( JSON.parse( buf2str(xhr.response) ), data );
+						if( rc.status!=0 ) { cDO.reject( rc ); return };
+
+						// 2. Check further constraints:
+						cDO.notify('Checking constraints',20);
+						rc = checkConstraints( data );
+						if( rc.status==0 ) 	cDO.resolve( data, rc )
+						else 				cDO.reject( rc );
+						break
+					case 404:
+						xhr = { status: 903, statusText: 'SpecIF version '+data.specifVersion+' is not supported by the program!' };
+					default:
+						cDO.reject(xhr)
+				}
+			}, 
+			null
+		);
+		return cDO
+		
+		function get(url,rspT,auth,successFn,nextFn) {
+			// https://blog.garstasio.com/you-dont-need-jquery/
+			// https://www.sitepoint.com/guide-vanilla-ajax-without-jquery/
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', url, true);
+			xhr.withCredentials = auth;
+			// https://stackoverflow.com/a/42916772/2214
+			xhr.responseType = rspT;
+			xhr.onreadystatechange = function () {
+		//		console.debug('xhr',this.readyState,this)
+				if (this.readyState<4 ) return;
+				if (this.readyState==4 && this.status==200) {
+					if( typeof successFn=="function" ) successFn(this)
+				};
+				// continue in case of success and error:
+				if( typeof nextFn=="function" ) nextFn()	
+			};
+			xhr.send(null)
+		}
+	}
+};
 // used by importSpecif to cache the data:
 var myProject = {
 		value: null,
@@ -79,69 +159,20 @@ var myProject = {
 			// not implemented
 		}
 	};
-// the demo app
-var app = {
-	main: function( file ) {
-			function readFile( f, fn ) {
-				console.debug( 'readFile ' + f.name );
-				var rdr = new FileReader();
-				rdr.onload = function(evt) {
-					fn( evt.target.result )		// import the file
-						.done( function() {
-							// process:
-							console.info('specif',myProject.value);
-							toFile( myProject.value, options )
-						})
-				//		.done( function() {alert('success')} )
-				//		.fail( function() {alert('failure')} )
-				};
-				rdr.readAsArrayBuffer( f )
-			}
-		// initialize:
-		var importSpecif = new ImportSpecif(); 	
-		importSpecif.open();
-		// check if file-type is eligible:
-		file = importSpecif.verify( file ); 
-		if( !file ) {
-			alert('wrong file-type');
-			return
-		};
-		
-		var options = { 
-				// If a hidden property is defined with value, it is suppressed only if it has this value;
-				// if the value is undefined, the property is suppressed in all cases.
-				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],
-				hideEmptyProperties: true,
-				propertiesLabel: 'Properties',
-				statementsLabel: 'Statements'
-			};
-		readFile( file, importSpecif.asBuf )
-	}
-}
+
 ///////////////////////////////////////////
 // used by importSpecif for transformation:
 	const CONFIG = {
-		imgExtensions: [ 'png', 'jpg', 'svg', 'gif', 'jpeg', 'png' ],
+		imgExtensions: [ 'png', 'jpg', 'svg', 'gif', 'jpeg' ],
+		imgTypes: [ 'image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/jpeg' ],
 		officeExtensions: []		// not supported (yet??)
 	};
-	function get(url,rspT,auth,successFn,nextFn) {
-		// https://blog.garstasio.com/you-dont-need-jquery/
-		// https://www.sitepoint.com/guide-vanilla-ajax-without-jquery/
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', url, true);
-		if( auth ) xhr.withCredentials = "true";
-		// https://stackoverflow.com/a/42916772/2214
-		xhr.responseType = rspT;
-		xhr.onreadystatechange = function () {
-	//		console.debug('xhr',this.readyState,this)
-			if (this.readyState<4 ) return;
-			if (this.readyState==4 && this.status==200) {
-				if( typeof successFn=="function" ) successFn(this)
-			};
-			// continue in case of success and error:
-			if( typeof nextFn=="function" ) nextFn()	
-		};
-		xhr.send(null)
+	function mediaTypeOf( fname ) {
+		let t = fname.fileExt();  // get the extension excluding '.'
+		if( !t ) return null;
+		let ti = CONFIG.imgExtensions.indexOf( t.toLowerCase() );
+		if( ti>-1 ) return CONFIG.imgTypes[ ti ];
+		return null
 	}
 	function buf2str(buf) {
 		// UTF-8 character table: http://www.i18nqa.com/debug/utf8-debug.html
@@ -161,6 +192,7 @@ var app = {
 		}
 	}
 	String.prototype.fileExt = function() {
+		// return the file extension without the dot:
 		return this.substring( this.lastIndexOf('.')+1 )
 	};
 	String.prototype.trimJSON = function() {
@@ -171,10 +203,14 @@ var app = {
 	};
 </script>
 <div id="main">
-	<h1>SpecIF to Ooxml Converter</h1>
+	<h1>SpecIF to OOXML Converter</h1>
 	<div style="padding-left:1em">
-		<div id="selectFile" >Please pick a file of type specif or specifz:</div>
-		<input id="importFile" type="file" name="files[]" onchange="app.main(this.files[0])" /><!-- (no 'multiple' attribute) -->
+		<p>Please pick a file of type specif or specifz:<br />
+			<input id="importFile" type="file" onchange="app.verify()" />
+		</p>
+		<p>Read SpecIF file and in transform to OOXML:<br />
+			<button id="startButton" type="button" disabled onclick="app.main()" >Start</button>
+		</p>
 	</div>
 </div>
 </body>

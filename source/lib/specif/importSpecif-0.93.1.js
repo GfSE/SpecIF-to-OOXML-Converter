@@ -1,8 +1,8 @@
 /*	ReqIF Server: SpecIF import 
 	Dependencies: jQuery, Bootstrap 3, BootstrapDialog
-	License: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 	(C)copyright 2010-2018 enso managers gmbh (http://www.enso-managers.de)
 	Author: se@enso-managers.de, Berlin
+	License: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 	We appreciate any correction, comment or contribution via e-mail to support@reqif.de            
 */
 
@@ -101,7 +101,7 @@ function ImportSpecif() {
 									// no break
 								case 'replace':
 									jDO.notify('Creating project',20); 
-									myProject.create( specif.put( data ) )
+									myProject.create( data )
 										.progress( jDO.notify )
 										.done( jDO.resolve )
 										.fail( jDO.reject );
@@ -113,7 +113,7 @@ function ImportSpecif() {
 										.done( function(refD) {
 //											console.debug('specif.update',refD,data)
 											// ... then start to save the new or updated elements:
-											myProject.update( specif.put( data ), 'extend' )
+											myProject.update( data, 'extend' )
 												.progress( jDO.notify )
 												.done( jDO.resolve )
 												.fail( jDO.reject )
@@ -130,7 +130,7 @@ function ImportSpecif() {
 //			mode = modeCre;
 			console.debug('Creating project',data);
 			jDO.notify('Creating project',20); 
-			myProject.create( specif.put( data ) )
+			myProject.create( data )
 				.progress( jDO.notify )
 				.done( jDO.resolve )
 				.fail( jDO.reject )

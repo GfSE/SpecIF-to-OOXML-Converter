@@ -48,22 +48,21 @@ function toOoxml( specifData, opts ) {
 	var ooxml = {
 			headings: [],
 			sections: [],		// a xhtml file per SpecIF hierarchy
-//			images: [],
 			imageLinks: []
 		};
 	
 	var hyperlinkID = 0; 		//variable to count up w:id for hyperlinks
 	let imageIDcount = opts.startRID;
 	
-	// The first section is a xhtml-file with the title page:
+/*	// The first section is a xhtml-file with the title page:
 	ooxml.sections.push(
 		ooxmlOf( 
 			null,
 			specifData.title,
 			'<div class="title">'+specifData.title+'</div>'
 		)
-		
 	)
+*/
 //	console.debug('sections push',ooxml.sections.push);
 	
 	// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
@@ -503,7 +502,7 @@ function toOoxml( specifData, opts ) {
 			);
 
 		// leere Container entfernen
-		txt = txt.replace(/<div> <\/div>|<div\/>/g,'');
+		txt = txt.replace(/<div>\s<\/div>|<div\/>/g,'');
 		// alle Container <div> / </div> entfernen
 		txt = txt.replace(/<div>|<\/div>/g,'');
 		//Externe Links entfernen
@@ -662,7 +661,7 @@ function toOoxml( specifData, opts ) {
 		let v1 = sectId?' id="'+sectId+'"':'';
 		let v3 = body? body:'';
 		return (v3)
-		}
+	}
 
 
 	function itemById(L,id) {
