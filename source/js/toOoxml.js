@@ -25,7 +25,14 @@ function toOoxml( specifData, opts ) {
 	if( opts.titleLinkBegin && opts.titleLinkEnd )
 		opts.RETitleLink = new RegExp( opts.titleLinkBegin+'(.+?)'+opts.titleLinkEnd, 'g' );
 	
+	// set certain SpecIF element names according to the SpecIF version:
 	switch( specifData.specifVersion ) {
+		case '0.10.0':
+		case '0.10.1':
+//			return { result: null, status: 903, statusText: 'SpecIF version '+specifData.specifVersion+' is not any more supported!' };
+			console.error('SpecIF version '+specifData.specifVersion+' is not any more supported!');
+			return null;
+		case '0.10.2':
 		case '0.10.3':
 			var rClasses = 'resourceTypes',
 				sClasses = 'statementTypes',
@@ -41,7 +48,11 @@ function toOoxml( specifData, opts ) {
 				rClass = 'class';
 				sClass = 'class'
 				pClass = 'class';
-			break
+			break;
+		default:
+//			return { result: null, status: 904, statusText: 'SpecIF version '+specifData.specifVersion+' is not (yet) supported!' };
+			console.error('SpecIF version '+specifData.specifVersion+' is not (yet) supported!');
+			return null;
 	};
 	
 	// All required parameters are available, so we can begin.
@@ -52,7 +63,7 @@ function toOoxml( specifData, opts ) {
 		};
 	
 	var hyperlinkID = 0; 		//variable to count up w:id for hyperlinks
-	let imageIDcount = opts.startRID;
+	let imgCnt = 0;
 	
 	// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
 	let firstHierarchySection = ooxml.sections.length;  // index of the next section number
@@ -315,20 +326,24 @@ function toOoxml( specifData, opts ) {
 					return str.substring( str.lastIndexOf('.')+1 )
 				}
 				function fileName( str ) {
-					str = str.replace('\\','/');
 					return str.substring( 0, str.lastIndexOf('.') )
 				}
-				// function pushReferencedFiles( i, u, t ) {
-// //					console.debug('u',u);
-					// // avoid duplicate entries:
-					// if( indexBy( ooxml.images, 'id', i )<0 ) {
-						// ooxml.images.push({
-							// id: i,					
-							// title: u.replace('\\','/'),  // is the distinguishing/relative part of the URL
-							// mimeType: t
-						// })
-					// }
-				// }
+				function pushReferencedFile( u, t ) {
+//					console.debug('u',u);
+//					ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:extOf(u1)});
+					// avoid duplicate entries:
+					let n = indexBy( ooxml.images, 'id', u );
+					if( n<0 ) {
+						n = ooxml.imageLinks.length;
+						ooxml.imageLinks.push({
+							ref: opts.startRID + n,
+							id: u,  // is the distinguishing/relative part of the URL
+							title: t,
+							type: extOf(u)
+						})
+					};
+					return opts.startRID + n
+				}
 
 			// Prepare a file reference for viewing and editing:
 //			console.debug('fromServer 0: ', txt);
@@ -352,9 +367,9 @@ function toOoxml( specifData, opts ) {
 			//			</xhtml:object>
 			txt = txt.replace( /<object([^>]+)>[\s\S]*?<object([^>]+)(\/>|>([\s\S]*?)<\/object>)[\s\S]*?<\/object>/g,   
 				function( $0, $1, $2, $3, $4 ) {        // description is $4
-					var u1 = getUrl( $1 ),  			// the primary information
+					var u1 = getUrl( $1 ).replace('\\','/'),  			// the primary information
 //						t1 = getType( $1 ), 
-						u2 = getUrl( $2 ), 				// the preview image
+						u2 = getUrl( $2 ).replace('\\','/'), 				// the preview image
 //						s2 = getStyle( $2 ), 
 						t2 = getType( $2 );
 					
@@ -368,22 +383,22 @@ function toOoxml( specifData, opts ) {
 					let png = itemById( specifData.files, fileName(u2)+'.png' );
 					if( t2.indexOf('svg')>-1 && opts.preferPng && png ) {
 						u2 = png.id.replace('\\','/');
-						t2 = png.mimeType
+						t2 = png.type
 					} 
 					let i2 = hashCode(u2)+'.'+extOf(u2);
-//					pushReferencedFiles( i2, u2, t2 );
 //					console.debug( $0, $4, u1, u2, t2 );
 					
 					// get the file extension:
 					let e = fileExt(u2);
 //					console.debug('e1',e);
-					ooxml.imageLinks.push({ref:imageIDcount,id:u2.replace('\\','/'),type:extOf(u2)});
+					imgCnt = pushReferencedFile( u2, $4 );
+//					ooxml.imageLinks.push({ref:imageIDcount,id:u2.replace('\\','/'),type:extOf(u2)});
 					
 					return 	'	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
 						+	'			<w:pict>		'
 						+	'				<v:shape id="_x0000_i1025" type="#_x0000_t75" style="width:222pt;height:57.75pt">	'
-						+	'				<v:imagedata r:id="rId'+imageIDcount+'" o:title="'+$4+'"/>	'
+						+	'				<v:imagedata r:id="rId'+imgCnt+'" o:title="'+$4+'"/>	'
 						+	'				</v:shape>	'
 						+	'			</w:pict>		'
 						+	'		</w:r>			'
@@ -397,7 +412,7 @@ function toOoxml( specifData, opts ) {
 			//			<object data=\"files_and_images\\27420ffc0000c3a8013ab527ca1b71f5.svg\" name=\"27420ffc0000c3a8013ab527ca1b71f5.svg\" type=\"image/svg+xml\"/>
 			txt = txt.replace( /<object([^>]+)(\/>|>([\s\S]*?)<\/object>)/g,   //  comprehensive tag or tag pair
 				function( $0, $1, $2, $3 ){ 
-					let u1 = getUrl( $1 ), 
+					let u1 = getUrl( $1 ).replace('\\','/'), 
 //						s1 = getStyle( $1 ), 
 						t1 = getType( $1 );
 
@@ -416,13 +431,9 @@ function toOoxml( specifData, opts ) {
 //					console.debug( $0, $1, 'url: ', u1, 'ext: ', e );
 						
 					let png = itemById( specifData.files, fileName(u1)+'.png' );
-					imageIDcount++;		//count up image ID
 					
 					if( opts.imgExtensions.indexOf( e )>-1 ) {  
 						// it is an image, show it:
-						
-						
-//						console.debug('imageIDcount2',imageIDcount);
 						
 						// if the type is svg, png is preferred and available, replace it:
 						if( t1.indexOf('svg')>-1 && opts.preferPng && png ) {
@@ -430,16 +441,15 @@ function toOoxml( specifData, opts ) {
 							t1 = png.mimeType
 						};
 						let i1 = hashCode(u1)+'.'+extOf(u1);
-//						pushReferencedFiles( i1, u1, t1 );
-						
 //						console.debug('u1',u1.replace('\\','/'));
-						ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:extOf(u1)});
+						imgCnt = pushReferencedFile( u1, d );
+//						ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:extOf(u1)});
 						
 						d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
 						+	'			<w:pict>		'
 						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:224pt;height:57.75pt">	'
-						+	'				<v:imagedata r:id="rId'+imageIDcount+'" o:title="'+d+'"/>	'
+						+	'				<v:imagedata r:id="rId'+imgCnt+'" o:title="'+d+'"/>	'
 						+	'				</v:shape>		'
 						+	'			</w:pict>		'
 						+	'		</w:r>			'
@@ -447,23 +457,20 @@ function toOoxml( specifData, opts ) {
 						
 					} else {
 						
-						
-//						console.debug('imageIDcount3',imageIDcount);
-						
 						if( e=='ole' && png ) {  
 							// It is an ole-file, so add a preview image;
 							u1 = png.id.replace('\\','/');
 							t1 = png.mimeType;
 							let i1 = hashCode(u1)+'.'+extOf(u1);
-//							pushReferencedFiles( i1, u1, t1 );
 							console.debug('u2', u1);
-							ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:+extOf(u1)});
+							imgCnt = pushReferencedFile( u1, d );
+//							ooxml.imageLinks.push({ref:imageIDcount,id:u1.replace('\\','/'),type:extOf(u1)});
 							
 							d = '	<w:p w:rsidR="00BB24CF" w:rsidRDefault="00BB24CF">				'
 						+	'		<w:r>			'
 						+	'			<w:pict>		'
 						+	'				<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:226pt;height:57.75pt">	'
-						+	'				<v:imagedata r:id="rId'+imageIDcount+'" o:title="'+d+'"/>	'
+						+	'				<v:imagedata r:id="rId'+imgCnt+'" o:title="'+d+'"/>	'
 						+	'				</v:shape>		'
 						+	'			</w:pict>		'
 						+	'		</w:r>			'
