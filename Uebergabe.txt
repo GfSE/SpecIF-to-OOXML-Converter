@@ -1,0 +1,20 @@
+Hallo Oskar, 
+
+ich bin mit dem Konverter leider nicht ganz fertig geworden. Ich habe noch diverse Probleme Festgestellt, die noch gelöst werden müssten. Aber erstmal zum positiven: die kleine Datei funktioniert problemlos.
+
+Nun zu den Schwachstellen:
+- das Array der Base64 Bilder wird nicht richtig gefüllt 
+- es werden alle Dateiformate weitergereicht (keine Auswahl zwischen png/svg)
+- die Bildgröße ist fix
+- in der Bildersektion kommt es zu Dopplungen bei öffnenden und schließenden Tags
+
+Wir können gern nachher, wenn du Zeit hast, darüber reden, andernfalls wäre ich nächste Woche ab Dienstag wieder im Büro. 
+Meine Telefonnummer: 0151 54852470
+
+LG
+Philip
+
+Philip Uwe Schulz
+adesso AG                      E philip-uwe.schulz@adesso.de
+Rotherstr. 19                  www.adesso.de
+10245 Berlin                   blog.adesso.de

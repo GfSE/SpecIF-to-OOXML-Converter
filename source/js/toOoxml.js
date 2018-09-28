@@ -54,30 +54,15 @@ function toOoxml( specifData, opts ) {
 	var hyperlinkID = 0; 		//variable to count up w:id for hyperlinks
 	let imageIDcount = opts.startRID;
 	
-/*	// The first section is a xhtml-file with the title page:
-	ooxml.sections.push(
-		ooxmlOf( 
-			null,
-			specifData.title,
-			'<div class="title">'+specifData.title+'</div>'
-		)
-	)
-*/
-//	console.debug('sections push',ooxml.sections.push);
-	
 	// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
 	let firstHierarchySection = ooxml.sections.length;  // index of the next section number
 	for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
 		ooxml.sections.push(
-			ooxmlOf( 
-				specifData.hierarchies[h].id,			
-				specifData.hierarchies[h].title,			
-				paragraphOf( specifData.hierarchies[h], 1 )	
-			)
+			renderChildrenOf( specifData.hierarchies[h], 1 )	
 		)
 	};
 
-//    console.debug('ooxmlinhalt',ooxml);
+//  console.debug('ooxml',ooxml);
 	return ooxml
 	
 	function pushHeading( t, pars ) {
@@ -190,7 +175,6 @@ function toOoxml( specifData, opts ) {
 			
 //		console.debug('ct',ct);
 		return ct + '</w:tbl>'
-		
 	}
 	
 	function anchorOf( res ) {
@@ -495,50 +479,48 @@ function toOoxml( specifData, opts ) {
 								'</w:p>';
 						}
 					};
-					
 				return d
 				}
-				
 			);
 
-		// leere Container entfernen
-		txt = txt.replace(/<div>\s<\/div>|<div\/>/g,'');
-		// alle Container <div> / </div> entfernen
-		txt = txt.replace(/<div>|<\/div>/g,'');
-		//Externe Links entfernen
-		txt = txt.replace(/<a href=[\s\S]*?>/g,'');
-		txt = txt.replace(/<\/a>/g,'');
-		//Betonung entfernen
-		txt = txt.replace(/<em>|<\/em>/g,'');
-		//> ([0-9]*)
-		// alle Zeilen umwandeln
-		txt = txt.replace(/<p\/>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t/></w:r></w:p>');
-		txt = txt.replace(/<p[\s\S]*?>/g,'<w:p w:rsidRDefault="00F717C9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
-		// hiermit wird <p>, <p class xxx> gefunden und ersetzt
-		txt = txt.replace(/<\/p>/g,'</w:t></w:r></w:p>');
-		// Aufzählungen filtern und umwandeln
-		txt = txt.replace(/<ul>|<\/ul>/g,'');
-		txt = txt.replace(/<li>/g,'<w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:pStyle w:val="Listenabsatz"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
-		txt = txt.replace(/<\/li>/g,'</w:t></w:r></w:p>');
-		// Leerzeilen entfernen
-		txt = txt.replace(/<br \/>/g,'');
+			// leere Container entfernen
+			txt = txt.replace(/<div>\s<\/div>|<div\/>/g,'');
+			// alle Container <div> / </div> entfernen
+			txt = txt.replace(/<div>|<\/div>/g,'');
+			//Externe Links entfernen
+			txt = txt.replace(/<a href=[\s\S]*?>/g,'');
+			txt = txt.replace(/<\/a>/g,'');
+			//Betonung entfernen
+			txt = txt.replace(/<em>|<\/em>/g,'');
+			//> ([0-9]*)
+			// alle Zeilen umwandeln
+			txt = txt.replace(/<p\/>/g,'<w:p w:rsidRDefault="00F717F9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t/></w:r></w:p>');
+			txt = txt.replace(/<p[\s\S]*?>/g,'<w:p w:rsidRDefault="00F717C9" w:rsidP="00F717F9"><w:pPr><w:rPr><w:lang w:val="en-US" /></w:rPr></w:pPr><w:r><w:rPr><w:lang w:val="en-US" /></w:rPr><w:t>');
+			// hiermit wird <p>, <p class xxx> gefunden und ersetzt
+			txt = txt.replace(/<\/p>/g,'</w:t></w:r></w:p>');
+			// Aufzählungen filtern und umwandeln
+			txt = txt.replace(/<ul>|<\/ul>/g,'');
+			txt = txt.replace(/<li>/g,'<w:p w:rsidR="000C0D2D" w:rsidRPr="00335752" w:rsidRDefault="00FB4B48" w:rsidP="00FB4B48"><w:pPr><w:pStyle w:val="Listenabsatz"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:rPr><w:lang w:val="en-US"/></w:rPr></w:pPr><w:bookmarkStart w:id="0" w:name="_GoBack"/><w:r w:rsidRPr="00335752"><w:rPr><w:lang w:val="en-US"/></w:rPr><w:t>');
+			txt = txt.replace(/<\/li>/g,'</w:t></w:r></w:p>');
+			// Leerzeilen entfernen
+			txt = txt.replace(/<br \/>/g,'');
 
-		// Tabellen umwandeln
-		// head
-		txt = txt.replace(/<table class="stdInlineWithBorder"> <tbody>/g,'<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>');
-		// Tabellenkopf
-		txt = txt.replace(/<th>/g,'<w:tc><w:tcPr><w:tcW w:w="2265" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRPr="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:pPr><w:rPr><w:b/></w:rPr></w:pPr><w:r w:rsidRPr="006438EE"><w:rPr><w:b/></w:rPr><w:t>');
-		txt = txt.replace(/<\/th>/g,'</w:t></w:r></w:p></w:tc>');
-		// Zeilen
-		txt = txt.replace(/<tr>/g,'<w:tr w:rsidR="006438EE" w:rsidTr="006438EE">');
-		txt = txt.replace(/<\/tr>/g,'</w:tr>');
-		// Felder
-		txt = txt.replace(/<td>/g,'<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>');
-		txt = txt.replace(/<\/td>/g,'</w:t></w:r></w:p></w:tc>');
-		// tail
-		txt = txt.replace(/<\/tbody>[\s]*?<\/table>/g,'</w:tbl>');
+			// Tabellen umwandeln
+			// head
+			txt = txt.replace(/<table class="stdInlineWithBorder"> <tbody>/g,'<w:tbl><w:tblPr><w:tblStyle w:val="Tabellenraster"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>');
+			// Tabellenkopf
+			txt = txt.replace(/<th>/g,'<w:tc><w:tcPr><w:tcW w:w="2265" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRPr="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:pPr><w:rPr><w:b/></w:rPr></w:pPr><w:r w:rsidRPr="006438EE"><w:rPr><w:b/></w:rPr><w:t>');
+			txt = txt.replace(/<\/th>/g,'</w:t></w:r></w:p></w:tc>');
+			// Zeilen
+			txt = txt.replace(/<tr>/g,'<w:tr w:rsidR="006438EE" w:rsidTr="006438EE">');
+			txt = txt.replace(/<\/tr>/g,'</w:tr>');
+			// Felder
+			txt = txt.replace(/<td>/g,'<w:tc><w:tcPr><w:tcW w:w="3020" w:type="dxa"/></w:tcPr><w:p w:rsidR="006438EE" w:rsidRDefault="006438EE" w:rsidP="006438EE"><w:r><w:t>');
+			txt = txt.replace(/<\/td>/g,'</w:t></w:r></w:p></w:tc>');
+			// tail
+			txt = txt.replace(/<\/tbody>[\s]*?<\/table>/g,'</w:tbl>');
 
-		return txt
+			return txt
 		}
 		
 		
@@ -633,10 +615,9 @@ function toOoxml( specifData, opts ) {
 			}
 		}
 	}
-	function paragraphOf( nd, lvl ) {
+	function renderChildrenOf( nd, lvl ) {
 		// For each of the children of specified hierarchy node 'nd', 
 		// write a paragraph for the referenced resource:
-//		console.debug( nd, lvl )
 		if( !nd.nodes || nd.nodes.length<1 ) return '';
 		let i=null, I=null, r=null, rC=null,
 			params={
@@ -650,19 +631,10 @@ function toOoxml( specifData, opts ) {
 			ch += 	titleOf( r, rC, params, opts )
  				+	propertiesOf( r, rC, opts )
 				+	statementsOf( r, opts )
-				+	paragraphOf( nd.nodes[i], lvl+1 )					// rekursiv für den Unterbaum - Chapter
+				+	renderChildrenOf( nd.nodes[i], lvl+1 )					// rekursiv für den Unterbaum - Chapter
 		};
-//		console.debug( 'ch', ch )
-				return ch
+		return ch
 	}
-	function ooxmlOf( sectId, sectTitle, body ) {
-		// make a ooxml file from the content provided,
-		// this is the frame of the file:
-		let v1 = sectId?' id="'+sectId+'"':'';
-		let v3 = body? body:'';
-		return (v3)
-	}
-
 
 	function itemById(L,id) {
 		if(!L||!id) return undefined;
