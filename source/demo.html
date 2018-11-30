@@ -23,15 +23,14 @@
 // License: Apache 2.0 (http://www.apache.org/licenses/)
 //
 
-var file = null,			// the picked import file
-	importSpecif = null;	// the import routine for SpecIF files
+var file = null,						// the picked import file
+	importSpecif = new ImportSpecif();	// the import routine for SpecIF files
 
 // the demo app:
 var app = {
 	verify: function() {
 
 		// initialize:
-		importSpecif = new ImportSpecif(); 	
 		importSpecif.open();
 
 		// get the selected file:
@@ -49,10 +48,10 @@ var app = {
 	main: function() {
 		var options = { 
 				// If a hidden property is defined with value, it is suppressed only if it has this value;
-				// if the value is undefined, the property is suppressed in all cases.
+				// if the value is undefined, the property is suppressed in all cases:
 				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],  // type is hidden in case of folder
-				hideEmptyProperties: true,
 				// if no label is provided, the respective content is suppressed:
+				hideEmptyProperties: true,
 				propertiesLabel: 'Properties',
 				statementsLabel: 'Statements',
 				done: function() { alert("File is saved according to your browser's configuration.") },
@@ -74,7 +73,7 @@ var app = {
 							f=myProject.value.files[i];
 							// add file type:
 							if( f.blob && !f.type )
-								f.type = f.blob.type || f.type || mediaTypeOf( f.id )
+								f.type = f.blob.type || mediaTypeOf( f.id )
 						};
 						// process:
 						toOxml( myProject.value, options )
@@ -86,6 +85,7 @@ var app = {
 	}
 }
 
+///////////////////////////////////////////
 // used by importSpecif to check and manipulate SpecIF data:
 var	specif = {
 	check: function( data ) {
@@ -148,7 +148,6 @@ var	specif = {
 var myProject = {
 		value: null,
 		create: function( data ) {
-//			console.debug('myProject.create',data);
 			var dO = $.Deferred();
 			this.value = data;
 			dO.resolve(null,'',{status:201});
@@ -158,8 +157,6 @@ var myProject = {
 			// not implemented
 		}
 	};
-
-///////////////////////////////////////////
 // used by importSpecif for transformation:
 	const CONFIG = {
 		imgExtensions: [ 'png', 'jpg', 'svg', 'gif', 'jpeg' ],
@@ -167,7 +164,7 @@ var myProject = {
 		officeExtensions: []		// not supported (yet??)
 	};
 	function mediaTypeOf( fname ) {
-		let t = fname.fileExt();  // get the extension excluding '.'
+		let t = extOf(fname);  // get the extension excluding '.'
 		if( !t ) return null;
 		let ti = CONFIG.imgExtensions.indexOf( t.toLowerCase() );
 		if( ti>-1 ) return CONFIG.imgTypes[ ti ];
@@ -190,16 +187,16 @@ var myProject = {
 			return String.fromCharCode.apply(null, new Uint8Array(buf))
 		}
 	}
-	String.prototype.fileExt = function() {
-		// return the file extension without the dot:
-		return this.substring( this.lastIndexOf('.')+1 )
-	};
 	String.prototype.trimJSON = function() {
 		// trim all characters outside the outer curly brackets, which may include the UTF-8 byte-order-mask: 
 		let si = this.indexOf('{'),
 			li = this.lastIndexOf('}');
 		return this.substring(si,li+1)
 	};
+	function extOf(str) {
+		// return the file extension without the dot:
+		return str.substring( str.lastIndexOf('.')+1 )
+	}
 </script>
 <div id="main">
 	<h1>SpecIF to OOXML Converter</h1>

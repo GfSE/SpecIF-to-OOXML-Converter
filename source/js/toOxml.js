@@ -22,16 +22,14 @@ function toOxml( specifData, opts ) {
 	// ToDo: Determine image size, if not specified,
 	// to get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 	var images = [],
-		f = null,
 		pend = 0;		// the number of pending operations
-	for (var i=0, I=specifData.files.length; i<I; i++) {
-		f = specifData.files[i];
+	specifData.files.forEach( function(f) {
 		if ( f.blob && ['image/png','image/jpg','image/jpeg'].indexOf(f.type)>-1) {
 			pend++;
 			// transform the file and continue processing, as soon as all are done:
 			image2base64(f)
 		}
-	};
+	});
 	if(specifData.files.length==0)
 		// start right away when there are no images:
 		createOxml();
@@ -137,14 +135,14 @@ function toOxml( specifData, opts ) {
 			let imgCnt = 0;
 			
 			// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
-			for( var h=0,H=specifData.hierarchies.length; h<H; h++ ) {
+			specifData.hierarchies.forEach( function(h) {
 				oxml.sections.push(
 					// The heading of the hierarchy=section:
-					wParagraph( {content:specifData.hierarchies[h].title,heading:1} )
+					wParagraph( {content:h.title,heading:1} )
 					// ... and the content:
-					+ renderChildrenOf( specifData.hierarchies[h], 1 )
+					+ renderChildrenOf( h, 1 )
 				)
-			};
+			});
 
 //			console.debug('oxml',oxml);
 			return oxml
@@ -163,17 +161,14 @@ function toOxml( specifData, opts ) {
 				// get the title value defined by one of the properties:
 				// designed for use also by statements and hierarchies.
 				// starting SpecIF 10.4, rC is r['class'] for resources, statements and hierarchies.
-				if( r.properties ) {
-					let pr=null;
-					for( var a=0,A=r.properties.length; a<A; a++ ) {
-						pr = r.properties[a];
+				if( r.properties )
+					r.properties.forEach( function(pr) {
 						rC.isHeading = rC.isHeading || opts.headingProperties.indexOf(pr.title)>-1;
 						if( opts.headingProperties.indexOf(pr.title)>-1
 							|| opts.titleProperties.indexOf(pr.title)>-1 ) {
 								return pr.value
 						}
-					}
-				};
+					});
 				// ... or take the resource's title, if there is no title property:
 				return r.title
 			}
@@ -196,10 +191,9 @@ function toOxml( specifData, opts ) {
 			function statementsOf( r, opts ) {
 				// get the statements of the resource as table:
 				if( !opts.statementsLabel ) return '';
-				let i, I, sts={}, st, cid, oid, sid, r2, noSts=true;
+				let sts={}, cid, oid, sid, noSts=true;
 				// Sort statements by type:
-				for( i=0, I=specifData.statements.length; i<I; i++ ) {		// alle Relationen = Statements
-					st = specifData.statements[i];
+				specifData.statements.forEach( function(st) {		// alle Relationen = Statements
 					cid = st[sClass];			// id der Klasse von st
 					// SpecIF v0.10.x: subject/object without revision, v0.11.y: with revision
 					sid = st.subject.id || st.subject;
@@ -211,7 +205,7 @@ function toOxml( specifData, opts ) {
 						if( sid==r.id ) sts[cid].objects.push( itemById(specifData.resources,oid) )
 						else sts[cid].subjects.push( itemById(specifData.resources,sid) )
 					}
-				};
+				});
 		//		console.debug( 'statements', r.title, sts );
 				if( noSts ) return '';	// no statements ...
 
@@ -226,10 +220,9 @@ function toOxml( specifData, opts ) {
 					// 3 columns:
 					if( sts[cid].subjects.length>0 ) {
 						cell = '';
-						for( i=0, I=sts[cid].subjects.length; i<I; i++ ) {
-							r2 = sts[cid].subjects[i];
+						sts[cid].subjects.forEach( function(r2) {
 							cell += wParagraph( {content:titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts ), hyperlink:anchorOf( r2 ),align:'end'} )
-						};
+						});
 						row = wTableCell( {content:cell,border:{type:'single'}} );
 						row += wTableCell( {content:wParagraph( {content:sTi,align:'center'} ),border:{type:'single'}});
 						row += wTableCell( {content:wParagraph( titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts ) ),border:{type:'single'}});
@@ -240,10 +233,9 @@ function toOxml( specifData, opts ) {
 						row = wTableCell( {content:wParagraph( {content:titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts ),align:'end'} ),border:{type:'single'}});
 						row += wTableCell( {content:wParagraph( {content:sTi,align:'center'} ),border:{type:'single'}});
 						cell = '';
-						for( i=0, I=sts[cid].objects.length; i<I; i++ ) {
-							r2 = sts[cid].objects[i];
+						sts[cid].objects.forEach( function(r2) {
 							cell += wParagraph( {content:titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts ), hyperlink:anchorOf( r2 )} )
-						};
+						});
 						row += wTableCell( {content:cell,border:{type:'single'}} );
 						ct += wTableRow( row )
 					}
@@ -254,28 +246,27 @@ function toOxml( specifData, opts ) {
 			function anchorOf( res ) {
 				// Find the hierarchy node id for a given resource;
 				// the first occurrence is returned:
-				let m=null, M=null, y=null, n=null, N=null, ndId=null;
+				let m=null, M=null, y=null, ndId=null;
 				for( m=0, M=specifData.hierarchies.length; m<M; m++ ) {
 					// for all hierarchies starting with the current one 'h':
 					y = (m+h) % M; 
 		//			console.debug( 'nodes', m, y, specifData.hierarchies );
 					if( specifData.hierarchies[y].nodes )
-						for( n=0, N=specifData.hierarchies[y].nodes.length; n<N; n++ ) {
-							ndId = ndByRef( specifData.hierarchies[y].nodes[n] );
-		//					console.debug('ndId',n,ndId);
+						specifData.hierarchies[y].nodes.forEach( function(ndId) {
+							ndId = ndByRef( ndId );
+		//					console.debug('ndId',ndId);
 							if( ndId ) return ndId		// return node id
-						}
+						})
 				};
 				return null;	// not found
 				
 				function ndByRef( nd ) {
-					let ndId=null;
 					if( nd.resource==res.id ) return nd.id;
 					if( nd.nodes )
-						for( var t=0, T=nd.nodes.length; t<T; t++ ) {
-							ndId = ndByRef( nd.nodes[t] );
+						nd.nodes.forEach( function (ndId) {
+							ndId = ndByRef( ndId );
 							if( ndId ) return ndId
-						};
+						});
 					return null
 				}
 			}
@@ -285,21 +276,21 @@ function toOxml( specifData, opts ) {
 				// starting SpecIF 10.4, rC is r['class'] for resources, statements and hierarchies.
 				if( !r.properties || r.properties.length<1 ) return '';
 				// return the content of all properties, sorted by description and other properties:
-				let a=null, A=null, c1='', rows='', c3, hPi=null, rt=null;
-				for( a=0,A=r.properties.length; a<A; a++ ) {
+				let c1='', rows='', c3, hPi=null, rt=null;
+				r.properties.forEach( function(pr) {
 					// the property title or it's class's title:
-					rt = r.properties[a].title || itemById(rC[pClasses],r.properties[a][pClass]).title;
+					rt = pr.title || itemById(rC[pClasses],pr[pClass]).title;
 						
 					// The content of the title property is already used as chapter title; so skip it here:
 					if( opts.headingProperties.indexOf(rt)>-1
-						|| opts.titleProperties.indexOf(rt)>-1 ) continue;
+						|| opts.titleProperties.indexOf(rt)>-1 ) return;
 					// First the resource's description properties in full width:
-					if( r.properties[a].value
+					if( pr.value
 						&& opts.descriptionProperties.indexOf(rt)>-1 ) {
-//							console.debug('description propertiesOf',valOf( r.properties[a] ));
-							valOf( r.properties[a] ).forEach(function(e){ c1 += generateOxml(e) })
+//							console.debug('description propertiesOf',valOf( pr ));
+							valOf( pr ).forEach(function(e){ c1 += generateOxml(e) })
 					}
-				};
+				});
 //				console.debug('propertiesOf',r,c1)
 				// Skip the remaining properties, if no label is provided:
 				if( !opts.propertiesLabel ) return c1;
@@ -309,24 +300,24 @@ function toOxml( specifData, opts ) {
 //					r.properties.push({title:'SpecIF:Type',value:rC.title});  // propertyClass and dataType are missing ..
 
 				// Finally, list the remaining properties with title (name) and value:
-				for( a=0,A=r.properties.length; a<A; a++ ) {
+				r.properties.forEach( function(pr) {
 					// the property title or it's class's title:
-					rt = r.properties[a].title || itemById(rC[pClasses],r.properties[a][pClass]).title;
+					rt = pr.title || itemById(rC[pClasses],pr[pClass]).title;
 					hPi = indexBy(opts.hiddenProperties,'title',rt);
 		
 					// skip hidden properties and those which have been included before,
 					// namely properties classified as heading, title and description:
-					if( opts.hideEmptyProperties && isEmpty(r.properties[a].value)
-						|| hPi>-1 && ( opts.hiddenProperties[hPi].value==undefined || opts.hiddenProperties[hPi].value==r.properties[a].value )
+					if( opts.hideEmptyProperties && isEmpty(pr.value)
+						|| hPi>-1 && ( opts.hiddenProperties[hPi].value==undefined || opts.hiddenProperties[hPi].value==pr.value )
 						|| opts.headingProperties.indexOf(rt)>-1
 						|| opts.titleProperties.indexOf(rt)>-1 
-						|| opts.descriptionProperties.indexOf(rt)>-1 ) continue;
+						|| opts.descriptionProperties.indexOf(rt)>-1 ) return;
 
 					c3 = '';
-//					console.debug('other propertiesOf',valOf( r.properties[a] ));
-					valOf( r.properties[a] ).forEach(function(e){ c3 += generateOxml(e) });
+//					console.debug('other propertiesOf',valOf( pr ));
+					valOf( pr ).forEach(function(e){ c3 += generateOxml(e) });
 					rows += wTableRow( wTableCell( wParagraph({content:rt,align:'end',font:{style:'italic'}})) + wTableCell( c3 ))
-				};
+				});
 				// Add a property 'SpecIF:Type':
 //				if( rC.title )
 //					rows += wTableRow( wTableCell( wParagraph('SpecIF:Type')) + wTableCell( wParagraph(rC.title) ));
@@ -477,89 +468,90 @@ function toOxml( specifData, opts ) {
 //						console.debug('splitRuns',bl);
 						if( bl.table ) {
 							// every table cell may contain XHTML-formatted text:
-							for( var i=bl.table.rows.length-1; i>-1; i-- ) 
-								for( var j=bl.table.rows[i].cells.length-1; j>-1; j-- ) {
-									split( bl.table.rows[i].cells[j].p )
-								};
+							bl.table.rows.forEach( function(tr) { 
+								tr.cells.forEach( function(c) {
+									split( c.p )
+								})
+							});
 							return
 						};
 						split(bl.p);
 						return
 						
-							function split(p) {
-								let txt = p.content,
-									fmt = p.font?{font:{weight:p.font.weight,style:p.font.style,color:p.font.color}}:{font:{}};
-								p.runs = [];
+						function split(p) {
+							let txt = p.content,
+								fmt = p.font?{font:{weight:p.font.weight,style:p.font.style,color:p.font.color}}:{font:{}};
+							p.runs = [];
 
-								txt = txt.replace(/<a href=[^>]*>/g,'');
-								txt = txt.replace(/<\/a>/g,'');
-								// ToDo: Zeilenumbrüche ersetzen, nicht löschen!
-								txt = txt.replace(/<br *\/>/g,'');
+							txt = txt.replace(/<a href=[^>]*>/g,'');
+							txt = txt.replace(/<\/a>/g,'');
+							// ToDo: Zeilenumbrüche ersetzen, nicht löschen!
+							txt = txt.replace(/<br *\/>/g,'');
 
-								// replace '<' and '>', when used in front of numeric values:
-								txt = txt.replace(/<( ?)([.,]?[0-9]+)/g, function ($0,$1,$2){ return '&lt;' + $1 + $2 });
-								txt = txt.replace(/>( ?)([.,]?[0-9]+)/g, function ($0,$1,$2){ return '&gt;' + $1 + $2 });
-								// replace all remaining '<' and '>':
-						//		txt = txt.replace(/</g, function ($0){ return '&lt;' });
-						//		txt = txt.replace(/>/g, function ($0){ return '&gt;' });
+							// replace '<' and '>', when used in front of numeric values:
+							txt = txt.replace(/<( ?)([.,]?[0-9]+)/g, function ($0,$1,$2){ return '&lt;' + $1 + $2 });
+							txt = txt.replace(/>( ?)([.,]?[0-9]+)/g, function ($0,$1,$2){ return '&gt;' + $1 + $2 });
+							// replace all remaining '<' and '>':
+					//		txt = txt.replace(/</g, function ($0){ return '&lt;' });
+					//		txt = txt.replace(/>/g, function ($0){ return '&gt;' });
 
-								// Find the next tag:
-								// - for all those which can be nested (such as <b> or <em>), the opening and closing tags are specified individually
-								//   to identify any formatting change - the preceding text will be stored as a 'run'.
-								// - for all others which cannot be nested and which cannot contain others (such as <object>), the pair is specified.
-								//   In that case, the total construct is stored as a run.
-								txt = txt.replace( reRuns, function($0,$1,$2) {
-									console.debug('lets run 0:"',$0,'" 1:"',$1,'" 2:"',$2,'"');
-									// store the preceding run with a clone of the current formatting:
-									if( !isEmpty($1) )
-										p.runs.push({content:$1,font:clone(fmt.font)});
+							// Find the next tag:
+							// - for all those which can be nested (such as <b> or <em>), the opening and closing tags are specified individually
+							//   to identify any formatting change - the preceding text will be stored as a 'run'.
+							// - for all others which cannot be nested and which cannot contain others (such as <object>), the pair is specified.
+							//   In that case, the total construct is stored as a run.
+							txt = txt.replace( reRuns, function($0,$1,$2) {
+								console.debug('lets run 0:"',$0,'" 1:"',$1,'" 2:"',$2,'"');
+								// store the preceding run with a clone of the current formatting:
+								if( !isEmpty($1) )
+									p.runs.push({content:$1,font:clone(fmt.font)});
 
-									// remove the next tag and update the formatting,
-									// $2 can only be one of the following:
-									if( /<b>/.test($2) ) {
-										fmt.font.weight = 'bold';
-										return ''
-									};
-									if( /<\/b>/.test($2) ) {
-										delete fmt.font.weight;	// simply, since there is only one value so far.
-										return ''
-									};
-									// assuming that <i> and <em> are not nested:
-									if( /<i>|<em>/.test($2) ) {
-										fmt.font.style = 'italic';
-										return ''
-									};
-									if( /<\/i>|<\/em>/.test($2) ) {
-										delete fmt.font.style;	// simply, since there is only one value so far.
-										return ''
-									};
-									let sp = /<span[^>]+color: ?#([0-9a-fA-F]{6})[^>]*>/.exec($2);
-									if( sp && sp.length>1 ) {
-										fmt.font.color = sp[1].toUpperCase();
-										return ''
-									};
-									if( /<\/span>/.test($2) ) {
-										delete fmt.font.color;	// simply, since there is only one value so far.
-										return ''
-									};
-									// an internal link (hyperlink, "titleLink"):
-									if( reTitleLink.test($2) ) {
-										p.runs.push(titleLink($2,opts));
-										return ''
-									};
-									if( /<object[^>]+\/>|<object[^>]+>[\s\S]*?<\/object>/.test($2) ) {
-										p.runs.push(parseObject( $2 ));
-										return ''
-									};
-									return ''  // be sure to consume the matched text
-								});
-								// finally store the remainder:
-								if( !isEmpty(txt) ) 
-									p.runs.push({content:txt});
+								// remove the next tag and update the formatting,
+								// $2 can only be one of the following:
+								if( /<b>/.test($2) ) {
+									fmt.font.weight = 'bold';
+									return ''
+								};
+								if( /<\/b>/.test($2) ) {
+									delete fmt.font.weight;	// simply, since there is only one value so far.
+									return ''
+								};
+								// assuming that <i> and <em> are not nested:
+								if( /<i>|<em>/.test($2) ) {
+									fmt.font.style = 'italic';
+									return ''
+								};
+								if( /<\/i>|<\/em>/.test($2) ) {
+									delete fmt.font.style;	// simply, since there is only one value so far.
+									return ''
+								};
+								let sp = /<span[^>]+color: ?#([0-9a-fA-F]{6})[^>]*>/.exec($2);
+								if( sp && sp.length>1 ) {
+									fmt.font.color = sp[1].toUpperCase();
+									return ''
+								};
+								if( /<\/span>/.test($2) ) {
+									delete fmt.font.color;	// simply, since there is only one value so far.
+									return ''
+								};
+								// an internal link (hyperlink, "titleLink"):
+								if( reTitleLink.test($2) ) {
+									p.runs.push(titleLink($2,opts));
+									return ''
+								};
+								if( /<object[^>]+\/>|<object[^>]+>[\s\S]*?<\/object>/.test($2) ) {
+									p.runs.push(parseObject( $2 ));
+									return ''
+								};
+								return ''  // be sure to consume the matched text
+							});
+							// finally store the remainder:
+							if( !isEmpty(txt) ) 
+								p.runs.push({content:txt});
 //									p.runs.push({content:txt,font:fmt.font});
-								delete p.content;
-								delete p.font
-							}
+							delete p.content;
+							delete p.font
+						}
 					}
 
 					function parseObject(txt) {
@@ -714,11 +706,9 @@ function toOxml( specifData, opts ) {
 							if( !opts.addTitleLinks || lk[1].length<opts.titleLinkMinLength ) 
 								return {content:lk[1]};
 							
-							let m=lk[1].toLowerCase(), cO=null, ti=null;
+							let m=lk[1].toLowerCase(), ti=null;
 							// is ti a title of any resource?
-							for( var x=specifData.resources.length-1;x>-1;x-- ) {
-								cO = specifData.resources[x];
-											
+							specifData.resources.forEach( function(cO) {
 								// avoid self-reflection:
 						//		if(ob.id==cO.id) continue;
 
@@ -729,12 +719,12 @@ function toOxml( specifData, opts ) {
 								ti = titleValOf( cO, itemById( specifData[rClasses], cO[rClass] ), opts );
 								
 								// disregard objects whose title is too short:
-								if( !ti || ti.length<opts.titleLinkMinLength ) continue;
+								if( !ti || ti.length<opts.titleLinkMinLength ) return;
 
 								// if the titleLink content equals a resource's title, return a text run with hyperlink:
 								if(m==ti.toLowerCase())
 									return {content:lk[1],hyperlink:anchorOf(cO)};
-							};
+							});
 							// The dynamic link has NOT been matched/replaced, so mark it:
 							return {content:lk[1],color:"82020"}
 						};
@@ -779,20 +769,20 @@ function toOxml( specifData, opts ) {
 				// write a paragraph for the referenced resource:
 				if( !nd.nodes || nd.nodes.length<1 ) return '';
 
-				let i=null, I=null, r=null, rC=null,
+				let r=null, rC=null,
 					params={
 						level: lvl
 					};
 				var ch = '';
-				for( i=0,I=nd.nodes.length; i<I; i++ ) {
-					r = itemById( specifData.resources,nd.nodes[i].resource );  // suche Objekt zur Referenz im Baum - resource
+				nd.nodes.forEach( function(n) {
+					r = itemById( specifData.resources,n.resource );  // suche Objekt zur Referenz im Baum - resource
 					rC = itemById( specifData[rClasses], r[rClass] );			// suche Klasse des referenzierten Objekts - resourceClass
-					params.nodeId = nd.nodes[i].id;
+					params.nodeId = n.id;
 					ch += 	titleOf( r, rC, params, opts )
 						+	propertiesOf( r, rC, opts )
 						+	statementsOf( r, opts )
-						+	renderChildrenOf( nd.nodes[i], lvl+1 )					// rekursiv für den Unterbaum - Chapter
-				};
+						+	renderChildrenOf( n, lvl+1 )					// rekursiv für den Unterbaum - Chapter
+				});
 				return ch
 			}
 
@@ -1010,7 +1000,7 @@ function toOxml( specifData, opts ) {
 
 	// picture content section
 	console.debug('files',specifData.files,images,file.imageLinks);
-	for (let a=0,A=file.imageLinks.length;a<A;a++) {
+	for(var a=0,A=file.imageLinks.length;a<A;a++) {
 		file.parts.push( packImg(a+1,file.imageLinks[a]) )
 	};
 
@@ -1045,7 +1035,7 @@ function toOxml( specifData, opts ) {
 
 		// a line for each image to link the text to the image
 		//console.debug('file.imageLinks',file.imageLinks);			
-		for (let a=0,A=imgL.length;a<A;a++) {
+		for(var a=0,A=imgL.length;a<A;a++) {
 			ct += '<Relationship Id="rId'+(imgL[a].ref)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image'+(a+1)+'.'+imgL[a].type+'"/>'
 		};
 		
@@ -1076,9 +1066,7 @@ function toOxml( specifData, opts ) {
 		+				'<w:document mc:Ignorable="w14 w15 wp14" xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">'
 		+					'<w:body>';
 
-		for( var h=0,H=sects.length; h<H; h++ ) {
-			ct += sects[h]
-		}
+		sects.forEach(function(s) { ct+=s });
 		
 		ct += 					'<w:sectPr w:rsidR="00AE0319">'
 		+							'<w:pgSz w:w="11906" w:h="16838"/>'
@@ -1098,10 +1086,7 @@ function toOxml( specifData, opts ) {
 		+	'<?mso-application progid="Word.Document"?>	'
 		+	'<pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage">';
 		
-		for(var p=0,P=partL.length;p<P;p++ ) {
-			ct += partL[p]
-//			console.log('part',partL[p])
-		};
+		partL.forEach( function(p) { ct += p });
 	
 		// document end:
 		ct += '		<pkg:part pkg:name="/word/theme/theme1.xml" pkg:contentType="application/vnd.openxmlformats-officedocument.theme+xml">'
@@ -2226,8 +2211,9 @@ function toOxml( specifData, opts ) {
 		for( var p in o ) {
 			if( Array.isArray(o[p]) ) {
 				n[p] = [];
-				for( var i=0, I=o[p].length;i<I;i++ )
-					n[p].push( clonePr(o[p][i]) );
+				o[p].forEach( function(op) {
+					n[p].push( clonePr(op) )
+				});
 				continue
 			};
 			// else
