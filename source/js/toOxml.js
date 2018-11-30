@@ -23,26 +23,30 @@ function toOxml( specifData, opts ) {
 	// to get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 	var images = [],
 		pend = 0;		// the number of pending operations
+	
 	specifData.files.forEach( function(f) {
 		if ( f.blob && ['image/png','image/jpg','image/jpeg'].indexOf(f.type)>-1) {
 			pend++;
 			// transform the file and continue processing, as soon as all are done:
-			image2base64(f)
-		}
+			image2base64(f,createOxml);
+			console.debug("File '"+f.id+"' transformed to Base64");
+			return
+		};
+		console.warn("File '"+f.id+"' cannot be used for the output.")
 	});
-	if(specifData.files.length==0)
+	if( specifData.files.length<1 )
 		// start right away when there are no images:
 		createOxml();
 	return;
 
 	// Convert an image to base64:
-	function image2base64(f) {			
+	function image2base64(f,fn) {			
 		const reader = new FileReader();
 		reader.addEventListener('loadend', function(e) {
 			images.push( {id:f.id,type:f.type,b64:e.target.result} );
 			if( --pend<1 ) {
 				// all images have been converted, continue processing:
-				createOxml()
+				if( typeof(fn)=='function' ) fn()
 			}
 		});
 		reader.readAsDataURL(f.blob)
@@ -132,7 +136,7 @@ function toOxml( specifData, opts ) {
 					sections: [],		// a xhtml file per SpecIF hierarchy
 					imageLinks: []
 				};
-			let imgCnt = 0;
+			let imgIdx = 0;
 			
 			// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
 			specifData.hierarchies.forEach( function(h) {
@@ -246,7 +250,15 @@ function toOxml( specifData, opts ) {
 			function anchorOf( res ) {
 				// Find the hierarchy node id for a given resource;
 				// the first occurrence is returned:
-				let m=null, M=null, y=null, ndId=null;
+				let ndId=null;
+				specifData.hierarchies.forEach( function(h) {
+					if( h.nodes )
+						h.nodes.forEach( function(ndId) {
+							ndId = ndByRef( ndId );
+							if( ndId ) return ndId		// return node id
+						})
+				});
+		/*		let m=null, M=null, y=null, ndId=null;
 				for( m=0, M=specifData.hierarchies.length; m<M; m++ ) {
 					// for all hierarchies starting with the current one 'h':
 					y = (m+h) % M; 
@@ -257,7 +269,7 @@ function toOxml( specifData, opts ) {
 		//					console.debug('ndId',ndId);
 							if( ndId ) return ndId		// return node id
 						})
-				};
+				}; */
 				return null;	// not found
 				
 				function ndByRef( nd ) {
@@ -483,7 +495,7 @@ function toOxml( specifData, opts ) {
 								fmt = p.font?{font:{weight:p.font.weight,style:p.font.style,color:p.font.color}}:{font:{}};
 							p.runs = [];
 
-							txt = txt.replace(/<a href=[^>]*>/g,'');
+							txt = txt.replace(/<a [^>]*>/g,'');
 							txt = txt.replace(/<\/a>/g,'');
 							// ToDo: Zeilenumbrüche ersetzen, nicht löschen!
 							txt = txt.replace(/<br *\/>/g,'');
@@ -909,17 +921,26 @@ function toOxml( specifData, opts ) {
 				// inserts an image at 'run' level:
 				// width, height: a string with number and unit, e.g. '100pt' is expected
 //				console.debug('wPict',pic);
-				imgCnt = pushReferencedFile( pic.picture.id, pic.picture.title );
+				imgIdx = pushReferencedFile( pic.picture.id, pic.picture.title );
+				if( imgIdx<0 ) {
+					let et = "Image '"+pic.picture.id+"' not available";
+					console.error( et );
+					return wText( "### "+et+" ###" )
+				};
+				// else, all is fine:
 				return	'<w:pict>'
 					+		'<v:shape id="_x0000_i1026" type="#_x0000_t75" style="width:'+pic.picture.width+';height:'+pic.picture.height+'">'
-					+			'<v:imagedata r:id="rId'+imgCnt+'" o:title="'+pic.picture.title+'"/>'
+					+			'<v:imagedata r:id="rId'+imgIdx+'" o:title="'+pic.picture.title+'"/>'
 					+		'</v:shape>'
-					+	'</w:pict>';
+					+	'</w:pict>'
 
 					function pushReferencedFile( u, t ) {
-	//					console.debug('u',u);
+						// check, if available:
+						let n = indexBy( images, 'id', u );
+						if( n<0 )
+							return -1;
 						// avoid duplicate entries:
-						let n = indexBy( oxml.imageLinks, 'id', u );
+						n = indexBy( oxml.imageLinks, 'id', u );
 						if( n<0 ) {
 							n = oxml.imageLinks.length;
 							oxml.imageLinks.push({
@@ -929,6 +950,7 @@ function toOxml( specifData, opts ) {
 								type: extOf(u)
 							})
 						};
+						// in any case return the reference no (index):
 						return startRID + n
 					}
 			}
@@ -992,7 +1014,7 @@ function toOxml( specifData, opts ) {
 
 	file.name = specifData.title;
 	file.parts = [];
-//	console.debug( 'oxml',file );
+	console.debug( 'oxml',file );
 	
 	file.parts.push( packGlobalRels() );
 	file.parts.push( packRels(file.imageLinks) );
@@ -1000,8 +1022,10 @@ function toOxml( specifData, opts ) {
 
 	// picture content section
 	console.debug('files',specifData.files,images,file.imageLinks);
+	let pi = null;
 	for(var a=0,A=file.imageLinks.length;a<A;a++) {
-		file.parts.push( packImg(a+1,file.imageLinks[a]) )
+		pi = packImg(a+1,file.imageLinks[a]);
+		if(pi) file.parts.push( pi )
 	};
 
 	file.content = packFile( file.parts );
@@ -1049,8 +1073,13 @@ function toOxml( specifData, opts ) {
 		var ct = '<pkg:part pkg:name="/word/media/image'+idx+'.'+b64.type+'" pkg:contentType="image/'+b64.type+'" pkg:compression="store">'
 		+			'<pkg:binaryData>'
 		// find the referenced image:
-		let imgIdx = indexById(images,b64.id),
-			startIdx = images[imgIdx].b64.indexOf(',')+1;	// image data starts after the ','
+		let imgIdx = indexBy(images,'id',b64.id);
+		if( imgIdx<0 ) {
+			console.error("File '"+b64.id+"' is referenced, but not available");
+			return null
+		};
+		
+		let startIdx = images[imgIdx].b64.indexOf(',')+1;	// image data starts after the ','
 
 		// add the image line by line:
 		for (var k=startIdx, K=images[imgIdx].b64.length; k<K; k+=lineLength) {
@@ -2227,13 +2256,6 @@ function toOxml( specifData, opts ) {
 		for( var i=L.length-1;i>-1;i-- )
 			if( L[i].id === id ) return L[i];   // return list item
 		return null
-	}
-	function indexById(L,id) {
-		// given an ID of an element in a list, return it's index:
-//		id = id.trim();
-		for( var i=L.length-1;i>-1;i-- )
-			if( L[i].id === id ) return i;   // return list index 
-		return -1
 	}
 	function indexBy( L, p, s ) {
 		// Return the index of an element in list 'L' whose property 'p' equals searchterm 's':

@@ -67,9 +67,9 @@ function ImportSpecif() {
 		};
 */		// else:
 		try {
-			message.show( i18n.phrase('ErrInvalidFileSpecif', f.name), 'warning', CONFIG.messageDisplayTimeNormal );
+			message.show( i18n.phrase('ErrInvalidFileSpecif', f.name), {severity:'warning'} );
 		} catch (e) {
-			alert('invalid file type')
+			alert(f.name+' has invalid file type.')
 		};
 		return null
 	};
@@ -160,12 +160,18 @@ function ImportSpecif() {
 				var fileList = zip.filter(function (relPath, file) {return file.name.endsWith('.specif')}),
 					data = {};
 
+				if( fileList.length<1 ) {
+					zDO.reject({ status: 901, statusText: 'No specif file in the specifz container.' });
+					return zDO
+				};
 				// take the first specif file found, ignore any other so far:
 				zip.file( fileList[0].name ).async("string")
 				.then( function(dta) {
 					// Check if data is valid JSON:
 					try {
-						// The file may have a UTF-8 BOM:
+						// Please note:
+						// - the file may have a UTF-8 BOM
+						// - all property values are encoded as string, even if boolean, integer or double.
 						dta = JSON.parse( dta.trimJSON() );
 						specif.check( dta )
 						.progress( zDO.notify )
@@ -184,19 +190,29 @@ function ImportSpecif() {
 												// extension must be contained in either one of the lists:
 												return ( CONFIG.imgExtensions.indexOf( x )>-1 || CONFIG.officeExtensions.indexOf( x )>-1 )
 											});
-							let pend = fileList.length;
-							fileList.forEach( function(e) { zip.file(e.name).async("blob")
-												.then( function(f) {
-													data.files.push({blob:f, id:e.name});
-													console.debug('file',pend,data.files);
-													if(--pend<1)
-														// now all files are extracted from the ZIP, so we can import:
-														self.asJson( data )		// data is in SpecIF format
-															.progress( zDO.notify )
-															.done( zDO.resolve )
-															.fail( zDO.reject )
-												}) 
-											})
+							if( fileList.length>0 ) {
+								let pend = fileList.length;
+								fileList.forEach( function(e) { zip.file(e.name).async("blob")
+													.then( function(f) {
+														data.files.push({blob:f, id:e.name});
+//														console.debug('file',pend,data.files);
+														if(--pend<1)
+															// now all files are extracted from the ZIP, so we can import:
+															self.asJson( data )		// data is in SpecIF format
+																.progress( zDO.notify )
+																.done( zDO.resolve )
+																.fail( zDO.reject )
+
+
+													}) 
+												})
+							} else {
+								// no files with permissible types are supplied:
+								self.asJson( data )		// data is in SpecIF format
+									.progress( zDO.notify )
+									.done( zDO.resolve )
+									.fail( zDO.reject )
+							}
 						})
 						.fail( zDO.reject )
 					} catch (e) {
@@ -240,5 +256,5 @@ function ImportSpecif() {
 	function extOf(str) {
 		// return the file extension without the dot:
 		return str.substring( str.lastIndexOf('.')+1 )
-	};
+	}
 };
