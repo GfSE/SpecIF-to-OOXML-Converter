@@ -29,7 +29,7 @@ function toOxml( specifData, opts ) {
 			pend++;
 			// transform the file and continue processing, as soon as all are done:
 			image2base64(f,createOxml);
-			console.debug("File '"+f.id+"' transformed to Base64");
+//			console.debug("File '"+f.id+"' transformed to Base64");
 			return
 		};
 		console.warn("File '"+f.id+"' cannot be used for the output.")
@@ -168,16 +168,19 @@ function toOxml( specifData, opts ) {
 				// get the title value defined by one of the properties:
 				// designed for use also by statements and hierarchies.
 				// starting SpecIF 10.4, rC is r['class'] for resources, statements and hierarchies.
-				if( r.properties )
-					r.properties.forEach( function(pr) {
+				if( r.properties ) {
+					let pr=null;
+					for( var a=0,A=r.properties.length; a<A; a++ ) {
+						pr = r.properties[a];
 						rC.isHeading = rC.isHeading || opts.headingProperties.indexOf(pr.title)>-1;
 						if( opts.headingProperties.indexOf(pr.title)>-1
 							|| opts.titleProperties.indexOf(pr.title)>-1 ) {
-								return pr.value
+								return escapeXML(pr.value)
 						}
-					});
+					}
+				};
 				// ... or take the resource's title, if there is no title property:
-				return r.title
+				return escapeXML(r.title)
 			}
 			function titleOf( r, rC, pars, opts ) { // resource, resourceClass, parameters, options
 				// get the title of the resource
@@ -205,7 +208,7 @@ function toOxml( specifData, opts ) {
 					// SpecIF v0.10.x: subject/object without revision, v0.11.y: with revision
 					sid = st.subject.id || st.subject;
 					oid = st.object.id || st.object;
-		//			console.debug(st,cid);
+//					console.debug(st,cid);
 					if( sid==r.id || oid==r.id ) {    // nur Relationen mit der betreffenden Ressource st
 						noSts = false;
 						if( !sts[cid] ) sts[cid] = {subjects:[],objects:[]};
@@ -213,7 +216,7 @@ function toOxml( specifData, opts ) {
 						else sts[cid].subjects.push( itemById(specifData.resources,sid) )
 					}
 				});
-		//		console.debug( 'statements', r.title, sts );
+//				console.debug( 'statements', r.title, sts );
 				if( noSts ) return '';	// no statements ...
 
 				// the heading:
@@ -361,7 +364,7 @@ function toOxml( specifData, opts ) {
 
 					// Identify and separate the blocks:
 					var blocks = splitBlocks(txt);
-					console.debug('parseXhtml',txt,blocks);
+//					console.debug('parseXhtml',txt,blocks);
 					return blocks;
 					
 					function splitBlocks(txt) {
@@ -434,7 +437,7 @@ function toOxml( specifData, opts ) {
 								// in case there is none of the above tags:
 								parseRows($1);
 								bL.push( {table:tbl} );
-								console.debug('table',bL);
+//								console.debug('table',bL);
 								return ''
 							});
 							return ''
@@ -500,7 +503,7 @@ function toOxml( specifData, opts ) {
 							let txt = p.content,
 								fmt = p.font?{font:{weight:p.font.weight,style:p.font.style,color:p.font.color}}:{font:{}};
 							p.runs = [];
-							console.debug('split',txt,fmt.font);
+//							console.debug('split',txt,fmt.font);
 
 							// ToDo: folgende Tags ersetzen, nicht löschen!
 							txt = txt.replace(/<a [^>]*>/g,'');
@@ -565,7 +568,7 @@ function toOxml( specifData, opts ) {
 							});
 							// finally store the remainder:
 							if( !isEmpty(txt) ) {
-								console.debug('split #',txt,fmt);
+//								console.debug('split #',txt,fmt);
 								p.runs.push({content:txt,font:clone(fmt.font)})
 							};
 							delete p.content;
@@ -849,7 +852,7 @@ function toOxml( specifData, opts ) {
 				return fn(ct)
 			}
 			function generateOxml( ct ) {
-				console.debug('generateOxml',ct);
+//				console.debug('generateOxml',ct);
 				return chain( ct,
 					function(ct) {
 						var rs = '';
@@ -870,7 +873,7 @@ function toOxml( specifData, opts ) {
 				)
 			}
 			function wParagraph( ct ) {
-				console.debug('wParagraph',ct)
+//				console.debug('wParagraph',ct)
 				// Generate a WordML paragraph,
 				// empty paragraphs are allowed.
 				// a) ct is simple text without any option:
@@ -933,7 +936,7 @@ function toOxml( specifData, opts ) {
 				}
 			}
 			function wRun( ct ) {
-				console.debug('wRun',ct);
+//				console.debug('wRun',ct);
 				// Generate a WordML text run as part of a paragraph,
 				// a run can be either a picture or a fragment of text, which can take several forms,
 				// empty runs are suppressed.
@@ -1085,14 +1088,14 @@ function toOxml( specifData, opts ) {
 
 	file.name = specifData.title;
 	file.parts = [];
-	console.debug( 'oxml',file );
+//	console.debug( 'oxml',file );
 	
 	file.parts.push( packGlobalRels() );
 	file.parts.push( packRels(file.relations) );
 	file.parts.push( packDoc(file.sections) );
 
 	// picture content section
-	console.debug('files',specifData.files,images,file.relations);
+//	console.debug('files',specifData.files,images,file.relations);
 	let pi = null;
 	for(var a=0,A=file.relations.length;a<A;a++) {
 		if( file.relations[a].category=='image' ) {
@@ -1131,7 +1134,7 @@ function toOxml( specifData, opts ) {
 		// ToDo: Attention, duplicate Ids are used, but this is the case with MS-generated files, as well ...
 
 		// a line for each image to link the text to the image
-		console.debug('file.relations',relL);			
+//		console.debug('file.relations',relL);			
 		for(var a=0,A=relL.length;a<A;a++) {
 			switch( relL[a].category ) {
 				case 'image': 
