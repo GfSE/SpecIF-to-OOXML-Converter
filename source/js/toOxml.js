@@ -1,4 +1,4 @@
-function toOxml( specifData, opts ) {
+function toOxml( data, opts ) {
 	"use strict";
 	// Create and save a MS WORD OpenXML document using SpecIF data.
 	// OpenXML can be opened by MS-Office, see "OpenXML Explained" by Wouter van Vugt: 
@@ -24,7 +24,7 @@ function toOxml( specifData, opts ) {
 	var images = [],
 		pend = 0;		// the number of pending operations
 	
-	specifData.files.forEach( function(f) {
+	data.files.forEach( function(f) {
 		if ( f.blob && ['image/png','image/jpg','image/jpeg'].indexOf(f.type)>-1) {
 			pend++;
 			// transform the file and continue processing, as soon as all are done:
@@ -55,7 +55,7 @@ function toOxml( specifData, opts ) {
 	function createOxml() {
 		// create the file content as OXML:
 
-		function createText( specifData, opts ) {
+		function createText( data, opts ) {
 			"use strict";
 			// Accepts data-sets according to SpecIF v0.10.4 or v0.11.2 and later.
 
@@ -104,11 +104,11 @@ function toOxml( specifData, opts ) {
 				reText = new RegExp(reT,'g');
 			
 			// set certain SpecIF element names according to the SpecIF version:
-			switch( specifData.specifVersion ) {
+			switch( data.specifVersion ) {
 				case '0.10.0':
 				case '0.10.1':
-		//			return { result: null, status: 903, statusText: 'SpecIF version '+specifData.specifVersion+' is not any more supported!' };
-					console.error('SpecIF version '+specifData.specifVersion+' is not any more supported!');
+		//			return { result: null, status: 903, statusText: 'SpecIF version '+data.specifVersion+' is not any more supported!' };
+					console.error('SpecIF version '+data.specifVersion+' is not any more supported!');
 					return null;
 				case '0.10.2':
 				case '0.10.3':
@@ -119,17 +119,13 @@ function toOxml( specifData, opts ) {
 						sClass = 'statementType',
 						pClass = 'propertyType';
 					break;
-				case '0.10.4':
+				default:
 					var rClasses = 'resourceClasses',
 						sClasses = 'statementClasses',
 						pClasses = 'propertyClasses',
-						rClass = 'class';
-						sClass = 'class'
-						pClass = 'class';
-					break;
-				default:
-					console.error('SpecIF version '+specifData.specifVersion+' is not (yet) supported!');
-					return null;
+						rClass = 'class',
+						sClass = 'class',
+						pClass = 'class'
 			};
 			
 			// All required parameters are available, so we can begin.
@@ -142,7 +138,7 @@ function toOxml( specifData, opts ) {
 			let imgIdx = 0;
 			
 			// For each SpecIF hierarchy a xhtml-file is created and returned as subsequent sections:
-			specifData.hierarchies.forEach( function(h) {
+			data.hierarchies.forEach( function(h) {
 				oxml.sections.push(
 					// The heading of the hierarchy=section:
 					wParagraph( {content:h.title,heading:1} )
@@ -203,7 +199,7 @@ function toOxml( specifData, opts ) {
 				if( !opts.statementsLabel ) return '';
 				let sts={}, cid, oid, sid, noSts=true;
 				// Sort statements by type:
-				specifData.statements.forEach( function(st) {		// alle Relationen = Statements
+				data.statements.forEach( function(st) {		// alle Relationen = Statements
 					cid = st[sClass];			// id der Klasse von st
 					// SpecIF v0.10.x: subject/object without revision, v0.11.y: with revision
 					sid = st.subject.id || st.subject;
@@ -212,8 +208,8 @@ function toOxml( specifData, opts ) {
 					if( sid==r.id || oid==r.id ) {    // nur Relationen mit der betreffenden Ressource st
 						noSts = false;
 						if( !sts[cid] ) sts[cid] = {subjects:[],objects:[]};
-						if( sid==r.id ) sts[cid].objects.push( itemById(specifData.resources,oid) )
-						else sts[cid].subjects.push( itemById(specifData.resources,sid) )
+						if( sid==r.id ) sts[cid].objects.push( itemById(data.resources,oid) )
+						else sts[cid].subjects.push( itemById(data.resources,sid) )
 					}
 				});
 //				console.debug( 'statements', r.title, sts );
@@ -225,7 +221,7 @@ function toOxml( specifData, opts ) {
 				// build a table of the statements/relations by type:
 				for( cid in sts ) {
 					// we don't have the individual statement's title; so we determine the class to get it's title, instead:
-					sTi = itemById(specifData[sClasses],cid).title;
+					sTi = itemById(data[sClasses],cid).title;
 
 					// 3 columns:
 					if( sts[cid].subjects.length>0 ) {
@@ -233,7 +229,7 @@ function toOxml( specifData, opts ) {
 						// collect all related resources (here sources):
 						sts[cid].subjects.forEach( function(r2) {
 							cell += wParagraph({
-										content: titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts ), 
+										content: titleOf( r2, itemById( data[rClasses], r2[rClass]), null, opts ), 
 										hyperlink: {internal:anchorOf( r2 )}, 
 										noSpacing: true,
 										align: 'end'
@@ -243,7 +239,7 @@ function toOxml( specifData, opts ) {
 						row += wTableCell( {content:wParagraph( {content:sTi,align:'center',noSpacing:true} ),border:{type:'single'}} );
 						row += wTableCell({
 								content:wParagraph({ 
-										content: titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts ), 
+										content: titleOf( r, itemById(data[rClasses],r[rClass]), null, opts ), 
 										noSpacing: true
 								}),
 								border: {type:'single'}
@@ -254,7 +250,7 @@ function toOxml( specifData, opts ) {
 					if( sts[cid].objects.length>0 ) {
 						row = wTableCell({
 								content:wParagraph({
-										content:titleOf( r, itemById(specifData[rClasses],r[rClass]), null, opts ),
+										content:titleOf( r, itemById(data[rClasses],r[rClass]), null, opts ),
 										noSpacing: true,
 										align:'end'
 								}), 
@@ -265,7 +261,7 @@ function toOxml( specifData, opts ) {
 						// collect all related resources (here objects):
 						sts[cid].objects.forEach( function(r2) {
 							cell += wParagraph({
-										content:titleOf( r2, itemById( specifData[rClasses], r2[rClass]), null, opts ), 
+										content:titleOf( r2, itemById( data[rClasses], r2[rClass]), null, opts ), 
 										hyperlink:{internal:anchorOf( r2 )},
 										noSpacing: true
 							})
@@ -281,11 +277,11 @@ function toOxml( specifData, opts ) {
 				// Find the hierarchy node id for a given resource;
 				// the first occurrence is returned:
 				let m=null, M=null, n=null, N=null, ndId=null;
- 				for( m=0, M=specifData.hierarchies.length; m<M; m++ ) {
-//					console.debug( 'nodes', m, specifData.hierarchies );
-					if( specifData.hierarchies[m].nodes )
-						for( n=0, N=specifData.hierarchies[m].nodes.length; n<N; n++ ) {
-							ndId = ndByRef( specifData.hierarchies[m].nodes[n] );
+ 				for( m=0, M=data.hierarchies.length; m<M; m++ ) {
+//					console.debug( 'nodes', m, data.hierarchies );
+					if( data.hierarchies[m].nodes )
+						for( n=0, N=data.hierarchies[m].nodes.length; n<N; n++ ) {
+							ndId = ndByRef( data.hierarchies[m].nodes[n] );
 //							console.debug('ndId',n,ndId);							
 							if( ndId ) return ndId		// return node id
 						}
@@ -687,7 +683,7 @@ function toOxml( specifData, opts ) {
 								e = extOf(u2);								// the file extension
 							
 							// if the type is svg, png is preferred and available, replace it:
-							let png = itemById( specifData.files, nameOf(u2)+'.png' );
+							let png = itemById( data.files, nameOf(u2)+'.png' );
 							if( t2.indexOf('svg')>-1 && opts.preferPng && png ) {
 								u2 = png.id.replace('\\','/');
 								t2 = "application/png"
@@ -695,7 +691,7 @@ function toOxml( specifData, opts ) {
 							} 
 							
 							// find the image to get width and height
-		//					img = itemById(specifData.files,u2);
+		//					img = itemById(data.files,u2);
 		//					...
 		// to get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 		
@@ -726,7 +722,7 @@ function toOxml( specifData, opts ) {
 		//					let hasImg = true;
 		//					console.debug( $0, $1, 'url: ', u1, 'ext: ', e );
 								
-							let png = itemById( specifData.files, nameOf(u1)+'.png' );
+							let png = itemById( data.files, nameOf(u1)+'.png' );
 							
 							if( opts.imgExtensions.indexOf( e )>-1 ) {  
 								// it is an image, show it:
@@ -783,8 +779,8 @@ function toOxml( specifData, opts ) {
 							
 							let m=lk[1].toLowerCase(), cO=null, ti=null;
 							// is ti a title of any resource?
-							for( var x=specifData.resources.length-1;x>-1;x-- ) {
-								cO = specifData.resources[x];	
+							for( var x=data.resources.length-1;x>-1;x-- ) {
+								cO = data.resources[x];	
 								// avoid self-reflection:
 						//		if(ob.id==cO.id) continue;
 
@@ -792,7 +788,7 @@ function toOxml( specifData, opts ) {
 						//	??	if( myProject.selectedSpec.objectRefs.indexOf(cO.id)<0 ) continue;
 
 								// get the pure title text:
-								ti = titleValOf( cO, itemById( specifData[rClasses], cO[rClass] ), opts );
+								ti = titleValOf( cO, itemById( data[rClasses], cO[rClass] ), opts );
 								
 								// disregard objects whose title is too short:
 								if( !ti || ti.length<opts.titleLinkMinLength ) continue;
@@ -810,7 +806,7 @@ function toOxml( specifData, opts ) {
 					// return the value of a single property
 					// as a list of paragraphs in normalized (internal) data structure,
 					// where XHTML-formatted text is parsed.
-					let dT = dataTypeOf(specifData.dataTypes, rC, pr[pClass] );
+					let dT = dataTypeOf(data.dataTypes, rC, pr[pClass] );
 					switch( dT.type ) {
 						case 'xs:enumeration':
 							let ct = '',
@@ -853,8 +849,8 @@ function toOxml( specifData, opts ) {
 					};
 				var ch = '';
 				nd.nodes.forEach( function(n) {
-					r = itemById( specifData.resources,n.resource );  // suche Objekt zur Referenz im Baum - resource
-					rC = itemById( specifData[rClasses], r[rClass] );			// suche Klasse des referenzierten Objekts - resourceClass
+					r = itemById( data.resources,n.resource );  // suche Objekt zur Referenz im Baum - resource
+					rC = itemById( data[rClasses], r[rClass] );			// suche Klasse des referenzierten Objekts - resourceClass
 					params.nodeId = n.id;
 					ch += 	titleOf( r, rC, params, opts )
 						+	propertiesOf( r, rC, opts )
@@ -1109,9 +1105,9 @@ function toOxml( specifData, opts ) {
 
 	// Start processing 'createOxml':	
 	let i=null, I=null, 
-		file = createText( specifData, opts );
+		file = createText( data, opts );
 
-	file.name = specifData.title;
+	file.name = data.title;
 	file.parts = [];
 //	console.debug( 'oxml',file );
 	
@@ -1120,7 +1116,7 @@ function toOxml( specifData, opts ) {
 	file.parts.push( packDoc(file.sections) );
 
 	// picture content section
-//	console.debug('files',specifData.files,images,file.relations);
+//	console.debug('files',data.files,images,file.relations);
 	let pi = null;
 	for(var a=0,A=file.relations.length;a<A;a++) {
 		if( file.relations[a].category=='image' ) {
@@ -2389,10 +2385,21 @@ function toOxml( specifData, opts ) {
 		// get the file extension without the '.':
 		return s.substring( s.lastIndexOf('.')+1 )
 	}
-	// do not escape '&' (&#38;), as the text may have encoded characters
 	function escapeXML( s ) {
-		return s.replace(/[<>"']/g, function($0) {
+		s = s.replace(/[<>"']/g, function($0) {
+			// 1. Replace <, >, " and ':
 			return "&" + {"<":"#60", ">":"#62", '"':"#34", "'":"#39"}[$0] + ";";
+		});
+		return s.replace( /&(.{0,7})/g, function($0,$1) {
+			// 2. Replace &, unless it belongs to an XML entity;
+			// so far we only recognize the numeric entities and ignore the literal entities:
+			if( /&([0-9]{1,4}|x[0-9a-fA-F]{1,4});/.test($0) ) {
+				// no replacement:
+				return $0
+			} else {
+				// encode the '&' and add the remainder of the pattern:
+				return '&#38;'+$1
+			}
 		})
 	}
 	// Make a very simple hash code from a string:
