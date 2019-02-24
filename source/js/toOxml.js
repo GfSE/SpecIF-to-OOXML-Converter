@@ -2387,10 +2387,10 @@ function toOxml( data, opts ) {
 			// 1. Replace <, >, " and ':
 			return "&" + {"<":"#60", ">":"#62", '"':"#34", "'":"#39"}[$0] + ";";
 		});
-		return s.replace( /&(.{0,7})/g, function($0,$1) {
+		return s.replace( /&(.{0,8})/g, function($0,$1) {
 			// 2. Replace &, unless it belongs to an XML entity;
 			// so far we only recognize the numeric entities and ignore the literal entities:
-			if( /&([0-9]{1,4}|x[0-9a-fA-F]{1,4});/.test($0) ) {
+			if( /&#([0-9]{1,5}|x[0-9a-fA-F]{1,4});/.test($0) ) {
 				// no replacement:
 				return $0
 			} else {
