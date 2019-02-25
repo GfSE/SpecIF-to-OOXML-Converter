@@ -7,13 +7,17 @@ function toOxml( data, opts ) {
 	// License: Apache 2.0 (https://apache.org/licenses/LICENSE-2.0)
 
 	// Check for missing options:
-	if ( !opts ) return null;
+	if( typeof(opts)!='object' ) opts = {};
 //	if( !opts.metaFontSize ) opts.metaFontSize = '70%';	
 //	if( !opts.metaFontColor ) opts.metaFontColor = '#0071B9';	// adesso blue
 //	if( !opts.linkFontColor ) opts.linkFontColor = '#0071B9';
 //	if( !opts.linkFontColor ) opts.linkFontColor = '#005A92';	// darker
 //	if( typeof(opts.linkNotUnderlined)!='boolean' ) opts.linkNotUnderlined = false;
 	if( typeof(opts.preferPng)!='boolean' ) opts.preferPng = true;
+	if( typeof(opts.RE)!='object' ) opts.RE = {};
+	if( !opts.RE.AmpersandPlus ) opts.RE.AmpersandPlus = /&(.{0,8})/g;
+	if( !opts.RE.XMLEntity ) opts.RE.XMLEntity = /&(amp|gt|lt|apos|quot|#x[0-9a-fA-F]{1,4}|#[0-9]{1,5});/;
+	
 	const startRID = 7,		// first relationship index for images
 		maxHeading = 4;  	// Headings from 1 to maxHeading are defined
 	
@@ -32,7 +36,7 @@ function toOxml( data, opts ) {
 //			console.debug("File '"+f.id+"' transformed to Base64");
 			return
 		};
-		console.warn("File '"+f.id+"' cannot be used for the output.")
+		console.warn("Format of file '"+f.id+"' is not supported by MS Word.")
 	});
 	if( pend==0 ) 
 		// start right away when there are no images to convert:
@@ -150,15 +154,6 @@ function toOxml( data, opts ) {
 //			console.debug('oxml',oxml);
 			return oxml
 			
-	/*		function pushHeading( t, pars ) {
-				oxml.headings.push({
-						id: pars.nodeId,
-						title: t,
-						section: oxml.sections.length,  // the index of the section in preparation (before it is pushed)
-						level: pars.level
-				})
-			}	
-	*/		
 			// ---------------
 			function titleValOf( r, rC, opts ) {
 				// get the title value defined by one of the properties:
@@ -350,9 +345,6 @@ function toOxml( data, opts ) {
 					valOf( prp ).forEach(function(e){ c3 += generateOxml(e) });
 					rows += wTableRow( wTableCell( wParagraph({content:rt,align:'end',font:{style:'italic'}})) + wTableCell( c3 ))
 				});
-				// Add a property 'SpecIF:Type':
-//				if( rC.title )
-//					rows += wTableRow( wTableCell( wParagraph('SpecIF:Type')) + wTableCell( wParagraph(rC.title) ));
 				
 				if( !rows ) return c1;  // no other properties
 				return c1 
@@ -361,8 +353,9 @@ function toOxml( data, opts ) {
 
 				// ---------------
 				function parseText( txt, opts ) {
-					// replace \r, \f, \t:
-					txt = txt.replace( /\r|\f/g, '' ).replace( /\t/g, '   ' );
+					// Replace \r, \f, \t:
+					// (Note that in HTML multiple nbsp do not collapse)
+					txt = txt.replace( /\r|\f/g, '' ).replace( /\t/g, nbsp+nbsp+nbsp );
 					txt = escapeXML(txt);
 					// then, split into 2 paragraphs when \n is encountered:
 					let arr = txt.split(/\n/);
@@ -529,10 +522,8 @@ function toOxml( data, opts ) {
 //							console.debug('split',txt,fmt.font);
 
 							// ToDo: folgende Tags ersetzen, nicht löschen!
-							txt = txt.replace(/<a[^>]*>/g,'');
-							txt = txt.replace(/<\/a>/g,'');
-							txt = txt.replace(/<small[^>]*>/g,'');
-							txt = txt.replace(/<\/small>/g,'');
+							txt = txt.replace(/<a[^>]*>/g,'').replace(/<\/a>/g,'');
+							txt = txt.replace(/<small[^>]*>/g,'').replace(/<\/small>/g,'');
 
 							// replace '<' and '>', when used in front of numeric values:
 							txt = txt.replace(/<( ?)([.,]?[0-9]+)/g, function ($0,$1,$2){ return '&lt;' + $1 + $2 });
@@ -625,7 +616,7 @@ function toOxml( data, opts ) {
 //								console.debug('splitText',txt,typeof(txt));
 								arr.push({str:escapeXML(txt)})
 							};
-							return arr;
+							return arr
 					}
 
 					function parseObject(txt) {
@@ -2383,21 +2374,20 @@ function toOxml( data, opts ) {
 		return s.substring( s.lastIndexOf('.')+1 )
 	}
 	function escapeXML( s ) {
-		s = s.replace(/[<>"']/g, function($0) {
-			// 1. Replace <, >, " and ':
-			return "&" + {"<":"#60", ">":"#62", '"':"#34", "'":"#39"}[$0] + ";";
-		});
-		return s.replace( /&(.{0,8})/g, function($0,$1) {
-			// 2. Replace &, unless it belongs to an XML entity;
-			// so far we only recognize the numeric entities and ignore the literal entities:
-			if( /&#([0-9]{1,5}|x[0-9a-fA-F]{1,4});/.test($0) ) {
-				// no replacement:
-				return $0
-			} else {
-				// encode the '&' and add the remainder of the pattern:
-				return '&#38;'+$1
-			}
-		})
+		return s.replace( opts.RE.AmpersandPlus, function($0,$1) {
+				// 1. Replace &, unless it belongs to an XML entity:
+				if( opts.RE.XMLEntity.test($0) ) {
+					// no replacement:
+					return $0
+				} else {
+					// encode the '&' and add the remainder of the pattern:
+					return '&#38;'+$1
+				}
+			})
+			.replace(/[<>"']/g, function($0) {
+				// 2. Replace <, >, " and ':
+				return "&" + {"<":"#60", ">":"#62", '"':"#34", "'":"#39"}[$0] + ";";
+			})
 	}
 	// Make a very simple hash code from a string:
 	// http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
