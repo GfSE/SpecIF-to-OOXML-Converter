@@ -82,6 +82,7 @@ function toOxml( data, opts ) {
 			if( opts.addTitleLinks )
 				var reTitleLink = new RegExp( opts.titleLinkBegin+'(.+?)'+opts.titleLinkEnd, '' );
 			
+			// see: http://webreference.com/xml/reference/xhtml.html
 			// The Regex to isolate text blocks for paragraphs:
 			var reB = '([\\s\\S]*?)'
 				+	'(<p */>|<p[^>]*>[\\s\\S]*?</p>'
