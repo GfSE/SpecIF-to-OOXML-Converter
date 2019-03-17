@@ -964,9 +964,8 @@ function toOxml( data, opts ) {
 			function wText( ct ) {
 				// return when there is no content: 
 				if( !ct || ct.picture || typeof(ct)=='object' && !ct.text ) return undefined;  
-				// ct is a string with length>0, an array ct.text or an object ct.text with length>0:
 //				console.debug('wText',ct);
-				// ct can be a string, an object or an array;
+				// ct is a string with length>0, an array ct.text or an object ct.text with length>0:
 				// in case of an array:
 				if( Array.isArray(ct.text) ) {
 					let str = '';
