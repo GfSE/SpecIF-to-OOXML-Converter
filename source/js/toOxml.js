@@ -23,7 +23,7 @@ function toOxml( data, opts ) {
 	const startRID = 7,		// first relationship index for images
 		maxHeading = 4;  	// Headings from 1 to maxHeading are defined
 	
-	console.debug('toOxml',data,opts);
+//	console.debug('toOxml',data,opts);
 	// Create a local list of images, which can be used in OXML:
 	// ToDo: Transform SVG to PNG, if not present.
 	// ToDo: Determine image size, if not specified,
@@ -80,10 +80,7 @@ function toOxml( data, opts ) {
 				opts.translate = function(str) { return str }
 			};
 			if( !opts.stereotypeProperties ) opts.stereotypeProperties = ['SpecIF:Stereotype'];	
-		/*	if( !opts.headingProperties ) opts.headingProperties = ['SpecIF:Heading','ReqIF.ChapterName','Heading','Überschrift'];
-			if( !opts.titleProperties ) opts.titleProperties = ['dcterms:title','DC.title','ReqIF.Name','Title','Titel'];
-			if( !opts.descriptionProperties ) opts.descriptionProperties = ['dcterms:description','DC.description','SpecIF:Diagram','ReqIF.Text','Description','Beschreibung'];
-			// If a hidden property is defined with value, it is suppressed only if it has this value;
+		/*	// If a hidden property is defined with value, it is suppressed only if it has this value;
 			// if the value is undefined, the property is suppressed in all cases.
 			if( !opts.hiddenProperties ) opts.hiddenProperties = [];
 		*/
@@ -167,7 +164,7 @@ function toOxml( data, opts ) {
 				let h = rC.isHeading?2:3;
 
 				// all titles get a bookmark, so that any titleLink has a target:
-				console.debug('titleOf',r,ti);
+//				console.debug('titleOf',r,ti);
 				return wParagraph( {text: (ti?ic+ti:''), heading:h, bookmark:pars.nodeId } )
 			}	
 			
@@ -292,7 +289,7 @@ function toOxml( data, opts ) {
 				
 				// return the content of all properties, sorted by description and other properties:
 				let c1='', rows='', c3, rt;
-				console.debug('propertiesOf',r);
+//				console.debug('propertiesOf',r);
 			/*	r.properties.forEach( function(prp) {
 					// the property title or it's class's title:
 					rt = prp.title || propertyClassOf( prp['class'] ).title;
