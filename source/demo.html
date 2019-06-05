@@ -6,12 +6,11 @@
 	<!--<meta http-equiv="cache-control" content="no-Cache" />-->
 	<meta http-equiv="expires" content="0" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<script type="text/javascript" src="./lib/jquery/jquery-3.3.1.min.js"></script>
-	<script type="text/javascript" src="./lib/filesaver/src/fileSaver.js"></script>
-	<script type="text/javascript" src="./lib/ajv/ajv-4.11.8.min.js"></script>
-	<script type="text/javascript" src="./lib/jszip/dist/jszip.js"></script>
-	<script type="text/javascript" src="https://specif.de/v0.10.6/check.js"></script>
-	<script type="text/javascript" src="./lib/specif/importSpecif.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ajv/4.11.8/ajv.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.0/jszip.min.js"></script>
+	<script type="text/javascript" src="https://specif.de/v0.10.8/check.js"></script>
 	<script type="text/javascript" src="./js/toOxml.js"></script>
 </head>
 <body>
@@ -23,21 +22,26 @@
 // License: Apache 2.0 (http://www.apache.org/licenses/)
 //
 
-var file = null,						// the picked import file
-	importSpecif = new ImportSpecif();	// the import routine for SpecIF files
+var file = null,		// the picked import file
+	ioSpecif = null;	// the import routine for SpecIF files
 
 // the demo app:
 var app = {
+	init: function() {
+		console.info('app.init');
+		getScript( './lib/specif/ioSpecif.mod.js' )
+		// once loaded, modules.construct is being called to create an object with executable methods.
+	},
 	verify: function() {
 
 		// initialize:
-		importSpecif.open();
+		ioSpecif.init({mediaTypeOf: mediaTypeOf});
 
 		// get the selected file:
         file = document.getElementById("importFile").files[0];
 
 		// check if file-type is eligible:
-		file = importSpecif.verify( file ); 
+		file = ioSpecif.verify( file ); 
 		if( file )
 			document.getElementById("startButton").disabled = false
 			// user may start the conversion
@@ -45,49 +49,6 @@ var app = {
 			alert('wrong file-type')
 			// try again
 	},
-	main: function() {
-		var options = { 
-				// If a hidden property is defined with value, it is suppressed only if it has this value;
-				// if the value is undefined, the property is suppressed in all cases:
-				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],  // type is hidden in case of folder
-				// if no label is provided, the respective content is suppressed:
-				hideEmptyProperties: true,
-				propertiesLabel: 'Properties',
-				statementsLabel: 'Statements',
-				done: function() { alert("File is saved according to your browser's configuration.") },
-				fail: function(err) { alert(err.statusText) }
-			};
-		readFile( file, importSpecif.asBuf );
-		return
-
-		function readFile( f, fn ) {
-//			console.debug( 'readFile ' + f.name );
-			var rdr = new FileReader();
-			rdr.onload = function(evt) {
-				fn( evt.target.result )		// import the file as arraybuffer
-					.done( function() {
-						console.info('specif',myProject.value);
-						document.getElementById("startButton").disabled = true;
-						let f;
-						for( var i=myProject.value.files.length-1;i>-1;i-- ) {
-							f=myProject.value.files[i];
-							// add file type:
-							if( f.blob && !f.type )
-								f.type = f.blob.type || mediaTypeOf( f.id )
-						};
-						// process:
-						toOxml( myProject.value, options )
-					})
-					.fail( function() {alert('failure to import the data')} )
-			};
-			rdr.readAsArrayBuffer( f )
-		}
-	}
-}
-
-///////////////////////////////////////////
-// used by importSpecif to check and manipulate SpecIF data:
-var	specif = {
 	check: function( data ) {
 		// check the SpecIF data:
 		var cDO = $.Deferred();
@@ -95,11 +56,11 @@ var	specif = {
 		cDO.notify('Checking schema',10);
 
 		// Get the specified schema file from the server:
-		get( 
-			"https://specif.de/v"+data.specifVersion+"/schema", 
-			'arraybuffer',	// response type
-			false,	// no authentication
-			function(xhr) { 
+		httpGet({ 
+			url: "https://specif.de/v"+data.specifVersion+"/schema", 
+			responseType: 'arraybuffer',
+			withCredentials: false,	// no authentication
+			done: function(xhr) { // successFn
 //				console.debug('schema', xhr);
 				switch( xhr.status ) {
 					case 200:
@@ -118,50 +79,174 @@ var	specif = {
 					default:
 						cDO.reject(xhr)
 				}
-			}, 
-			null
-		);
+			} 
+		//	fail: null,
+		//	then: null
+		});
 		return cDO
 		
-		function get(url,rspT,auth,successFn,nextFn) {
+		function httpGet(parms) {
 			// https://blog.garstasio.com/you-dont-need-jquery/
 			// https://www.sitepoint.com/guide-vanilla-ajax-without-jquery/
 			var xhr = new XMLHttpRequest();
-			xhr.open('GET', url, true);
-			xhr.withCredentials = auth;
+			xhr.open('GET', parms.url, true);
+			if( parms.withCredentials ) xhr.withCredentials = "true";
 			// https://stackoverflow.com/a/42916772/2214
-			xhr.responseType = rspT;
+			xhr.responseType = parms.responseType;
 			xhr.onreadystatechange = function () {
 		//		console.debug('xhr',this.readyState,this)
 				if (this.readyState<4 ) return;
-				if (this.readyState==4 && this.status==200) {
-					if( typeof successFn=="function" ) successFn(this)
+				if ( this.readyState==4 ) {
+					switch( this.status ) {
+						case 200:
+						case 201:
+							// done without error:
+							if( typeof(parms.done)=="function" ) parms.done(this);
+							break;
+						default:
+							// done with error:
+							if( typeof(parms.fail)=="function" ) parms.fail(this)
+					}
 				};
 				// continue in case of success and error:
-				if( typeof nextFn=="function" ) nextFn()	
+				if( typeof(parms.then)=="function" ) parms.then()	
 			};
 			xhr.send(null)
 		}
+	},
+	main: function() {
+		var options = { 
+				classifyProperties: classifyProps,
+				// If a hidden property is defined with value, it is suppressed only if it has this value;
+				// if the value is undefined, the property is suppressed in all cases:
+				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],  // type is hidden in case of folder
+				// if no label is provided, the respective content is suppressed:
+				hideEmptyProperties: true,
+				propertiesLabel: 'Properties',
+				statementsLabel: 'Statements',
+				done: function() { alert("File is saved according to your browser's configuration.") },
+				fail: function(err) { alert(err.statusText) }
+			};
+		readFile( file, ioSpecif.toSpecif )
+		return
+
+		function readFile( f, fn ) {
+//			console.debug( 'readFile ' + f.name );
+			var rdr = new FileReader();
+			rdr.onload = function(evt) {
+				fn( evt.target.result )		// import the file as arraybuffer
+					.done( function(data) {
+						console.info('specif',data);
+						document.getElementById("startButton").disabled = true;
+					/*	let f;
+						for( var i=data.files.length-1;i>-1;i-- ) {
+							f=data.files[i];
+							// add file type:
+							if( f.blob && !f.type )
+								f.type = f.blob.type || mediaTypeOf( f.id )
+						}; */
+						// check:
+						app.check(data)
+							.done( function() {
+								// process:
+								toOxml( data, options )
+							})
+							.fail( function(err) {alert('failure to import the data')} )
+					})
+					.fail( function(err) {alert(err.statusText)} )
+			};
+			rdr.readAsArrayBuffer( f )
+		}
+		function classifyProps( el ) {
+			"use strict";
+			// add missing (empty) properties and
+			// classify properties into title, descriptions and other;
+			// for resources, statements and hierarchies/specifications.
+			// Note that here 'class' is the class object itself ... and not the id as is the case with SpecIF.
+			var cP = {
+				id: el.id,
+				title: null,
+				class: el['class'],
+				revision: el.revision,
+				descriptions: [],
+				// create a new list by copying the elements (do not copy the list):
+				other: (el.properties&&el.properties.length>0?[].concat( el.properties ):[])
+			};
+//			console.debug('classifyProps',el,cP);
+
+			// Now, all properties are listed in cP.other;
+			// in the following, the properties used as title and description will be identified
+			// and removed from cP.other.
+
+			// a) Find and set the configured title:
+			let a = titleIdx( cP.other );
+			if( a>-1 ) {  // found!
+				// Remove all formatting for the title, as the app's format shall prevail.
+				// Before, remove all marked deletions (as prepared be diffmatchpatch).
+				cP.title = deformat( cP.other[a].value );
+				// remove title from other:
+				cP.other.splice(a,1) 
+			} else {
+				// In certain cases (SpecIF hierarchy root, comment or ReqIF export), there is no title property. 
+				// Here we want only 'real' titles and none, if there is none.
+				cP.title = el.title
+			};
+				
+			// b) Check the configured descriptions:
+			// We must iterate backwards, because we alter the list of other.
+			// ToDo: use cP.other.filter()
+			for( a=cP.other.length-1;a>-1;a-- ) {
+				if( CONFIG.descriptionProperties.indexOf( cP.other[a].title )>-1 ) {
+					// To keep the original order of the properties, the unshift() method is used.
+		//			cP.descriptions.unshift( cP.other.splice(a,1)[0] )
+					cP.descriptions.unshift( cP.other[a] );
+					cP.other.splice(a,1) 
+				}
+			};
+			if( cP.descriptions.length<1 && el.description ) cP.descriptions.push( {title: "dcterms:description", value: el.description} );
+//			console.debug( 'classifyProps', cP.title, cP.descriptions, cP.other );
+			return cP
+			
+			function deformat( str ) {
+				// strip html, but don't use a regex to impede cross-site-scripting (XSS) attacks:
+				return $("<dummy/>").html( str ).text()
+			}
+			function titleIdx( aL ) {
+				// Find the index of the property to be used as title.
+				// The result depends on the current user - only the properties with read permission are taken into consideration
+				for( var a=0,A=aL.length;a<A;a++ ) {
+					// First, check the configured headings:
+					if( CONFIG.headingProperties.indexOf( aL[a].title )>-1 ) return a;
+					// If nothing has been found, check the configured titles:
+					if( CONFIG.titleProperties.indexOf( aL[a].title )>-1 ) return a
+				};
+				return -1
+			}
+		}
 	}
 };
-// used by importSpecif to cache the data:
-var myProject = {
-		value: null,
-		create: function( data ) {
-			var dO = $.Deferred();
-			this.value = data;
-			dO.resolve(null,'',{status:201});
-			return dO
-		},
-		abort: function() {
-			// not implemented
-		}
-	};
-// used by importSpecif for transformation:
+var modules = {
+	construct: function( defs, constructorFn ) {
+		// Construct a module.
+		// This routine is called by the code in the file, once loaded via getScript.
+		ioSpecif = defs;
+		// construct the controller using the provided function:
+		constructorFn(ioSpecif);
+		// initialize:
+		ioSpecif.init({mediaTypeOf:mediaTypeOf}); 
+		console.debug('modules.construct',ioSpecif)
+	}
+};
+	
+///////////////////////////////////////////
 	const CONFIG = {
 		imgExtensions: [ 'png', 'jpg', 'svg', 'gif', 'jpeg' ],
 		imgTypes: [ 'image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/jpeg' ],
-		officeExtensions: []		// not supported (yet??)
+		officeExtensions: [],	// not supported (yet??)
+		modelExtensions: [],
+		headingProperties: ['SpecIF:Heading','ReqIF.ChapterName','Heading','Überschrift'],
+		titleProperties: ['dcterms:title','DC.title','ReqIF.Name','Title','Titel'],
+		descriptionProperties: ['dcterms:description','DC.description','SpecIF:Diagram','ReqIF.Text','Description','Beschreibung']
 	};
 	function mediaTypeOf( fname ) {
 		let t = extOf(fname);  // get the extension excluding '.'
@@ -197,14 +282,35 @@ var myProject = {
 		// return the file extension without the dot:
 		return str.substring( str.lastIndexOf('.')+1 )
 	}
+	function getScript( url, options ) {
+		// see http://api.jquery.com/jQuery.getScript/
+		// Allow user to set any option except for dataType and cache
+		options = $.extend( options || {}, {
+			dataType: "script",
+			cache: true,
+			url: url
+		});
+		// Use $.ajax() since it is more flexible than $.getScript
+		// Return the jqXHR object so we can chain callbacks
+		return $.ajax( options )
+	}
+	// Make a very simple hash code from a string:
+	// http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
+	String.prototype.simpleHash = function(){for(var r=0,i=0;i<this.length;i++)r=(r<<5)-r+this.charCodeAt(i),r&=r;return r};
+
+$( function() {
+	// the DOM is ready:
+	app.init()
+});	
+
 </script>
 <div id="main">
-	<h1>SpecIF to OOXML Converter</h1>
+	<h1>SpecIF to OXML Converter</h1>
 	<div style="padding-left:1em">
 		<p>Please pick a file of type specif or specifz:<br />
 			<input id="importFile" type="file" onchange="app.verify()" />
 		</p>
-		<p>Read SpecIF file and in transform to OOXML:<br />
+		<p>Read SpecIF file and in transform to OXML:<br />
 			<button id="startButton" type="button" disabled onclick="app.main()" >Start</button>
 		</p>
 	</div>
