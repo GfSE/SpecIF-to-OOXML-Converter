@@ -138,13 +138,6 @@ var app = {
 					.done( function(data) {
 						console.info('specif',data);
 						document.getElementById("startButton").disabled = true;
-					/*	let f;
-						for( var i=data.files.length-1;i>-1;i-- ) {
-							f=data.files[i];
-							// add file type:
-							if( f.blob && !f.type )
-								f.type = f.blob.type || mediaTypeOf( f.id )
-						}; */
 						// check:
 						app.check(data)
 							.done( function() {

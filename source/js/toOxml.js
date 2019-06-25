@@ -70,7 +70,7 @@ function toOxml( data, opts ) {
 			// Accepts data-sets according to SpecIF v0.10.8 and later.
 
 			// Check for missing options:
-			if( !opts ) opts = {};
+			if( typeof(opts)!='object' ) opts = {};
 			if( typeof(opts.classifyProperties)!='function' && typeof(opts.fail)=='function' ) {
 				opts.fail({status:904,statusText:'function opts.classifyProperties is undefined.'});
 				return
@@ -79,11 +79,11 @@ function toOxml( data, opts ) {
 			if( !opts.translateTitles || typeof(opts.translate)!='function' ) {
 				opts.translate = function(str) { return str }
 			};
-			if( !opts.stereotypeProperties ) opts.stereotypeProperties = ['SpecIF:Stereotype'];	
-		/*	// If a hidden property is defined with value, it is suppressed only if it has this value;
+			// If a hidden property is defined with value, it is suppressed only if it has this value;
 			// if the value is undefined, the property is suppressed in all cases.
 			if( !opts.hiddenProperties ) opts.hiddenProperties = [];
-		*/
+			if( !opts.stereotypeProperties ) opts.stereotypeProperties = ['SpecIF:Stereotype'];	
+		
 			// If no label is provided, the respective properties are skipped:
 			if( opts.propertiesLabel && opts.translateTitles ) opts.propertiesLabel = opts.translate( opts.propertiesLabel );	
 			if( opts.statementsLabel && opts.translateTitles ) opts.statementsLabel = opts.translate( opts.statementsLabel );	
@@ -132,7 +132,7 @@ function toOxml( data, opts ) {
 			// All required parameters are available, so we can begin.
 			const nbsp = '&#160;'; // non-breakable space
 			var oxml = {
-	//				headings: [],
+		//			headings: [],
 					sections: [],		// a xhtml file per SpecIF hierarchy
 					relations: []
 				};
@@ -143,14 +143,13 @@ function toOxml( data, opts ) {
 					renderHierarchy( h, 1 )
 				)
 			});
-
 //			console.debug('oxml',oxml);
 			return oxml
 			
 			// ---------------
 			function titleOf( r, pars, opts ) { // resource, resourceClass, parameters, options
-				// get the title of the resource
-				// designed for use also by statements and hierarchies.
+				// render the resource title
+				// designed for use also by statements.
 				
 				// depending on the context, r['class'] is an class object or a class id:
 				let rC = r['class'].id? r['class'] : itemById( data.resourceClasses, r['class'] );
@@ -163,8 +162,8 @@ function toOxml( data, opts ) {
 				// SpecIF headings are chapter level 2, all others level 3:
 				let h = rC.isHeading?2:3;
 
-				// all titles get a bookmark, so that any titleLink has a target:
 //				console.debug('titleOf',r,ti);
+				// all titles get a bookmark, so that any titleLink has a target:
 				return wParagraph( {text: (ti?ic+ti:''), heading:h, bookmark:pars.nodeId } )
 			}	
 			
@@ -679,7 +678,7 @@ function toOxml( data, opts ) {
 							let pngF = itemByTitle( data.files, nameOf(u1)+'.png' );
 //							console.debug('parseObject',e,pngF);
 							if( t1.indexOf('svg')>-1 && opts.preferPng && pngF ) {
-								u1 = pngF.title.replace('\\','/');
+								u1 = pngF.title;
 								t1 = pngF.type
 							};
 							// At the lowest level, the image is included only if present:
@@ -717,7 +716,8 @@ function toOxml( data, opts ) {
 						//		if(ob.id==cO.id) continue;
 
 								// get the pure title text:
-								ti = escapeXML( cO.title )
+								ti = cO.title;
+						//		ti = escapeXML( cO.title );
 								
 								// disregard objects whose title is too short:
 								if( !ti || ti.length<opts.titleLinkMinLength ) continue;
