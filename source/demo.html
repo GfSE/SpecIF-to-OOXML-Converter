@@ -29,7 +29,7 @@ var file = null,		// the picked import file
 var app = {
 	init: function() {
 		console.info('app.init');
-		getScript( './lib/specif/ioSpecif.mod.js' )
+		$.getScript( './lib/specif/ioSpecif.mod.js' )
 		// once loaded, modules.construct is being called to create an object with executable methods.
 	},
 	verify: function() {
@@ -274,18 +274,6 @@ var modules = {
 	function extOf(str) {
 		// return the file extension without the dot:
 		return str.substring( str.lastIndexOf('.')+1 )
-	}
-	function getScript( url, options ) {
-		// see http://api.jquery.com/jQuery.getScript/
-		// Allow user to set any option except for dataType and cache
-		options = $.extend( options || {}, {
-			dataType: "script",
-			cache: true,
-			url: url
-		});
-		// Use $.ajax() since it is more flexible than $.getScript
-		// Return the jqXHR object so we can chain callbacks
-		return $.ajax( options )
 	}
 	// Make a very simple hash code from a string:
 	// http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
