@@ -17,7 +17,7 @@ function toOxml( data, opts ) {
 	if( typeof(opts.RE)!='object' ) opts.RE = {};
 	if( !opts.RE.AmpersandPlus ) opts.RE.AmpersandPlus = new RegExp( '&(.{0,8})', 'g' );
 	if( !opts.RE.XMLEntity ) opts.RE.XMLEntity = new RegExp( '&(amp|gt|lt|apos|quot|#x[0-9a-fA-F]{1,4}|#[0-9]{1,5});/', '');
-	if( typeof(opts.imageResolution)!='number' ) opts.imageResolution = 10; // 10 dots per mm = ~256 dpi
+	if( typeof(opts.imageResolution)!='number' ) opts.imageResolution = 8; // 10 dots per mm = ~256 dpi
 
 	// ToDo: Reject versions < 0.10.8
 	
@@ -27,10 +27,10 @@ function toOxml( data, opts ) {
 //	console.debug('toOxml',data,opts);
 	// Create a local list of images, which can be used in OXML:
 	// ToDo: Transform SVG to PNG, if not present.
+	// ToDo: Determine image size, if not specified,
 	// to get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 	var images = [],
-		pend = 0,		// the number of pending operations
-		img;			// to obtain width and height
+		pend = 0;		// the number of pending operations
 
 //	console.debug('files',data.files);
 	if( data.files && data.files.length>0 )
@@ -53,16 +53,19 @@ function toOxml( data, opts ) {
 	function image2base64(f,fn) {			
 		const reader = new FileReader();
 		reader.addEventListener('loadend', function(e) {
-			img = new Image();   // Create new img element
-			img.addEventListener('load', function() {
-						// please note the different use of 'id' and 'title' in file and images!
-						images.push( {id:f.title,type:f.type,h:this.height,w:this.width,b64:e.target.result} );
-						if( --pend<1 ) {
-							// all images have been converted, continue processing:
-							if( typeof(fn)=='function' ) fn()
-						}
-					}, false);
-			img.src = e.target.result;
+			// Obtain width and height
+			function store(ev) {
+//				console.debug('#',ev);
+				// please note the different use of 'id' and 'title' in file and images!
+				images.push( {id:f.title,type:f.type,h:ev.target.height,w:ev.target.width,b64:ev.target.src} );
+				if( --pend<1 ) {
+					// all images have been converted, continue processing:
+					if( typeof(fn)=='function' ) fn()
+				}
+			}
+			let img = new Image();   
+			img.addEventListener('load', store, false); 
+			img.src = e.target.result
 		});
 		reader.readAsDataURL(f.blob)
 	}
@@ -921,6 +924,7 @@ function toOxml( data, opts ) {
 					// avoid duplicate entries:
 					let n = indexBy( oxml.relations, 'id', u );
 					if( n<0 ) {
+						// Next to external URLs, oxml.relations are pointing to other resources:
 						n = oxml.relations.length;
 						oxml.relations.push({
 							category: 'url',
@@ -954,34 +958,34 @@ function toOxml( data, opts ) {
 				if( !ct || !ct.picture ) return undefined;
 				// inserts an image at 'run' level:
 				// width, height: a string with number and unit, e.g. '100pt' or '160mm' is expected
-				let imgIdx = pushReferencedFile( ct.picture );
+				let imgIdx = indexBy( images, 'id', ct.picture.id );
 				if( imgIdx<0 ) {
 					let et = "Image '"+ct.picture.id+"' is missing";
 					console.error( et );
 					return wText( "### "+et+" ###" )
 				};
+//				console.debug('pushReferencedFile',oxml.relations,n);
+				let rIdx = pushReferencedFile( ct.picture );
 				// else, all is fine:
 				let img = images[imgIdx],
 					w = Math.min( img.w / opts.imageResolution, 160 ),
-					h = img.h / img.w * w;
+					h = w>0? (img.h / img.w * w) : 0;
 //				console.debug('wPict',ct,img,h,w);
 				return	'<w:pict>'
 					// we need to specify both width and height; WORD is not assuming the native aspect ratio:
 					+		'<v:shape style="width:'+w+'mm;height:'+h+'mm">'
-					+			'<v:imagedata r:id="rId'+(startRID+imgIdx)+'" o:title="'+ct.picture.title+'"/>'
+					+			'<v:imagedata r:id="rId'+rIdx+'" o:title="'+ct.picture.title+'"/>'
 					+		'</v:shape>'
 					+	'</w:pict>'
 
 				function pushReferencedFile( p ) {
 					// Add the image to the relationships and return it's index:
 					// check, if available:
-					let n = indexBy( images, 'id', p.id );
-					if( n<0 )
-						return -1;
-					n = indexBy( oxml.relations, 'id', p.id );
+					let n = indexBy( oxml.relations, 'id', p.id );
 					// skip when found to avoid duplicate entries:
 					if( n<0 ) {
-						// new entry:
+						// New entry:
+						// Next to images, oxml.relations are pointing to other resources:
 						n = oxml.relations.length;
 						oxml.relations.push({
 							category: 'image',
@@ -993,7 +997,7 @@ function toOxml( data, opts ) {
 						})
 					};
 					// in any case return the reference no (index):
-					return n
+					return startRID+n
 				}
 			}
 			// some helpers to build a table with its rows and cells:
