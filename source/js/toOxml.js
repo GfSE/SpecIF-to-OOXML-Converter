@@ -18,11 +18,16 @@ function toOxml( data, opts ) {
 	if( !opts.RE.AmpersandPlus ) opts.RE.AmpersandPlus = new RegExp( '&(.{0,8})', 'g' );
 	if( !opts.RE.XMLEntity ) opts.RE.XMLEntity = new RegExp( '&(amp|gt|lt|apos|quot|#x[0-9a-fA-F]{1,4}|#[0-9]{1,5});/', '');
 	if( typeof(opts.imageResolution)!='number' ) opts.imageResolution = 8; // 10 dots per mm = ~256 dpi
+	if( typeof(opts.marginLeft)!='number' ) opts.marginLeft = 25; // mm
+	if( typeof(opts.marginRight)!='number' ) opts.marginRight = 25; // mm
 
 	// ToDo: Reject versions < 0.10.8
 	
 	const startRID = 7,		// first relationship index for images
-		maxHeading = 4;  	// Headings from 1 to maxHeading are defined
+		maxHeading = 4,  	// Headings from 1 to maxHeading are defined
+		pageWidth = 210,	// mm for A4
+		columnWidth = pageWidth-opts.marginLeft-opts.marginRight,
+		twips = 56.692913385826;  // twips per mm
 	
 //	console.debug('toOxml',data,opts);
 	// Create a local list of images, which can be used in OXML:
@@ -296,23 +301,23 @@ function toOxml( data, opts ) {
 				// designed for use also by statements.
 			//	if( !r.properties || r.properties.length<1 ) return '';
 
-				// depending on the context, r['class'] is an class object or a class id:
-			//	let rC = r['class'].id? r['class'] : itemById( data.resourceClasses, r['class'] );
-				
+			/*	// depending on the context, r['class'] is an class object or a class id:
+				let rC = r['class'].id? r['class'] : itemById( data.resourceClasses, r['class'] ); 
+			*/
 				// return the content of all properties, sorted by description and other properties:
 				let c1='', rows='', c3, rt;
-//				console.debug('properties',r);
 
 				r.descriptions.forEach( function(prp) {
 					valOf( prp ).forEach(function(e){ c1 += generateOxml(e) })
 				});
+				console.debug('properties',r,c1);
 				// Skip the remaining properties, if no label is provided:
 //				console.debug('properties',c1);
 				if( !opts.propertiesLabel ) return c1;
 				
-			/*	// Add a property 'SpecIF:Type':
+			/*	// Add a property 'SpecIF:Class':
 				if( rC.title )
-					r.properties.push({title:'SpecIF:Type',value:rC.title});  // propertyClass and dataType are missing ..
+					r.other.push({title:'SpecIF:Type',value:rC.title});  // propertyClass and dataType are missing ..
 			*/
 				// Finally, list the remaining properties with title (name) and value:
 				r.other.forEach( function(prp) {
@@ -371,8 +376,9 @@ function toOxml( data, opts ) {
 					// Prepare:
 					// Remove empty <div> tags:
 					txt = txt.replace(/<div[^>]*>\s*<\/div>|<div *\/>/g,'');
-					// Must at least return an empty paragraph:
-					if( !txt ) return [{p:{text:''}}];
+			/*		// Must at least return an empty paragraph:
+					if( !txt ) return [{p:{text:''}}]; */
+					if( !txt ) return [];
 
 					// Identify and separate the blocks:
 					var blocks = splitParagraphs(txt);
@@ -409,13 +415,13 @@ function toOxml( data, opts ) {
 							};
 							// c) a paragraph:
 							$2 = $2.replace(/<p[^>]*>([\s\S]*?)<\/p>/, function($0,$1) {
-								bL.push( {p:{text:$1}} );
+								bL.push( {p:{text:$1.trim()}} );
 								return ''
 							});
 							// d) an unordered list:
 							$2 = $2.replace(/<ul>([\s\S]*?)<\/ul>/, function($0,$1) {
 								$1.replace(/<li>([\s\S]*?)<\/li>/g, function($0,$1) {
-									bL.push( {p:{text:$1,style:'bulleted'}} );
+									bL.push( {p:{text:$1.trim(),style:'bulleted'}} );
 									return ''
 								});
 								return ''
@@ -423,7 +429,7 @@ function toOxml( data, opts ) {
 							// e) an ordered list:
 							$2 = $2.replace(/<ol>([\s\S]*?)<\/ol>/, function($0,$1) {
 								$1.replace(/<li>([\s\S]*?)<\/li>/g, function($0,$1) {
-									bL.push( {p:{text:$1,style:'numbered'}} );
+									bL.push( {p:{text:$1.trim(),style:'numbered'}} );
 									return ''
 								});
 								return ''
@@ -462,7 +468,7 @@ function toOxml( data, opts ) {
 											// where the content is in $1, if provided:
 //											console.debug('th',$0,'|',$1);
 											// the 'th' cell with it's content
-											cs.push( {p:{text:$1||nbsp, font:{weight:'bold'}}, border:{style:'single'}} )
+											cs.push( {p:{text:$1.trim()||nbsp, font:{weight:'bold'}}, border:{style:'single'}} )
 											// ToDo: Somehow the text is not printed boldly ...
 											return ''
 											});
@@ -471,7 +477,7 @@ function toOxml( data, opts ) {
 											// where the content is in $1, if provided:
 //											console.debug('td',$0,'|',$1);
 											// the 'td' cell with it's content
-											cs.push( {p:{text:$1||nbsp}, border:{style:'single'}} )
+											cs.push( {p:{text:$1.trim()||nbsp}, border:{style:'single'}} )
 											return ''
 											});
 									// the row with it's content:
@@ -486,7 +492,7 @@ function toOxml( data, opts ) {
 						// but we do not want to ignore any content in case there is ...
 						// A <div> enclosed text:
 						txt = txt.replace(/<div[^>]*>([\s\S]*?)<\/div>/g, function($0,$1) {
-							bL.push( {p:{text:$1}} );
+							bL.push( {p:{text:$1.trim()}} );
 							return ''
 						});
 						if( opts.hasContent(txt) ) 
@@ -968,7 +974,7 @@ function toOxml( data, opts ) {
 				let rIdx = pushReferencedFile( ct.picture );
 				// else, all is fine:
 				let img = images[imgIdx],
-					w = Math.min( img.w / opts.imageResolution, 160 ),
+					w = Math.min( img.w / opts.imageResolution, columnWidth ),
 					h = w>0? (img.h / img.w * w) : 0;
 //				console.debug('wPict',ct,img,h,w);
 				return	'<w:pict>'
@@ -1006,11 +1012,12 @@ function toOxml( data, opts ) {
 				// - a 'string' 
 				// - an object {content:'string'}
 				// - an object {content:'string',width:'full'}
+				if( !rs || typeof(rs)=='object'&&!rs.content ) return '';
 				return 	'<w:tbl>'
 					+		'<w:tblPr>'
 					+			'<w:tblStyle w:val="Tabellenraster"/>'
 					+		(rs.width&&rs.width=='full'?'<w:tblW w:w="5000" w:type="pct"/>':'<w:tblW w:w="0" w:type="auto"/>')
-		//			+			'<w:tblW w:w="0" w:type="auto"/>'
+			//		+			'<w:tblW w:w="0" w:type="auto"/>'
 					+			'<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>'
 					+		'</w:tblPr>'
 					+ 		(rs.content || rs)
@@ -1146,7 +1153,7 @@ function toOxml( data, opts ) {
 		
 		ct += 					'<w:sectPr>'
 		+							'<w:pgSz w:w="11906" w:h="16838"/>'
-		+							'<w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/>'
+		+							'<w:pgMar w:top="1417" w:right="'+Math.round(opts.marginRight*twips)+'" w:bottom="1134" w:left="'+Math.round(opts.marginLeft*twips)+'" w:header="708" w:footer="708" w:gutter="0"/>'
 		+							'<w:cols w:space="708"/>'
 		+							'<w:docGrid w:linePitch="360"/>'
 		+						'</w:sectPr>'
