@@ -6,6 +6,16 @@ function toOxml( data, opts ) {
 	// Accepts data-sets according to SpecIF v0.10.8 and later.
 	// License: Apache 2.0 (https://apache.org/licenses/LICENSE-2.0)
 
+	// Reject versions < 0.10.8:
+	let v = data.specifVersion.split('.');
+	if( v.length!=3 || (10000*parseInt(v[0],10)+100*parseInt(v[1],10)+parseInt(v[2],10))<1008 ) {
+		if (typeof(opts.fail)=='function' )
+			opts.fail({status:904,statusText:"SpecIF Version < v0.10.8 is not supported."})
+		else
+			console.error("SpecIF Version < v0.10.8 is not supported.");
+		return
+	};
+	
 	// Check for missing options:
 	if( typeof(opts)!='object' ) opts = {};
 //	if( !opts.metaFontSize ) opts.metaFontSize = '70%';	
@@ -21,8 +31,6 @@ function toOxml( data, opts ) {
 	if( typeof(opts.marginLeft)!='number' ) opts.marginLeft = 25; // mm
 	if( typeof(opts.marginRight)!='number' ) opts.marginRight = 25; // mm
 
-	// ToDo: Reject versions < 0.10.8
-	
 	const startRID = 7,		// first relationship index for images
 		maxHeading = 4,  	// Headings from 1 to maxHeading are defined
 		pageWidth = 210,	// mm for A4
@@ -32,7 +40,6 @@ function toOxml( data, opts ) {
 //	console.debug('toOxml',data,opts);
 	// Create a local list of images, which can be used in OXML:
 	// ToDo: Transform SVG to PNG, if not present.
-	// ToDo: Determine image size, if not specified,
 	// to get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 	var images = [],
 		pend = 0;		// the number of pending operations
@@ -785,7 +792,7 @@ function toOxml( data, opts ) {
 						level: lvl,
 						nodeId: nd.id
 					};
-					
+				console.debug( 'r',nd,r );
 				r = opts.classifyProperties( r, data );	
 				var ch = 	titleOf( r, params, opts )
 						+	propertiesOf( r, opts )
