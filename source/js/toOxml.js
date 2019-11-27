@@ -82,7 +82,6 @@ function toOxml( data, opts ) {
 						console.debug('img',img);
 						ctx.drawImage( img, 0, 0, img.width, img.height );
 				//		ctx.drawImage( img, 0, 0 );
-				//		tgtImage.src = can.toDataURL()
 						// please note the different use of 'id' and 'title' in specif.files and images!
 						images.push( {id:pngN,type:'image/png',h:img.height,w:img.width,b64:can.toDataURL()} );
 						if( --pend<1 ) {
@@ -92,9 +91,7 @@ function toOxml( data, opts ) {
 							createOxml()
 						}
 					});
-				/*	img.height = 500;
-					img.width = 1000; */
-					img.src = 'data:image/svg+xml,' + encodeURIComponent( svg );
+					img.src = 'data:image/svg+xml,' + encodeURIComponent( svg )
 				})  
 
 
