@@ -73,11 +73,9 @@ function toOxml( data, opts ) {
 				pend++;
 				let can = document.createElement('canvas'), // Not shown on page
 					ctx = can.getContext('2d'),
-					img = new Image(),                      // Not shown on page
-					svg;
-				blob2text(f,function(r,fTi,fTy) {
-					console.debug("File ", fTi, fTy, r );
-					svg = r;
+					img = new Image();                      // Not shown on page
+				blob2text(f,function(svg,fTi,fTy) {
+//					console.debug("File ", fTi, fTy, svg );
 					img.addEventListener('loadend', function(){
 						console.debug('img',img);
 						ctx.drawImage( img, 0, 0, img.width, img.height );
@@ -85,7 +83,6 @@ function toOxml( data, opts ) {
 						// please note the different use of 'id' and 'title' in specif.files and images!
 						images.push( {id:pngN,type:'image/png',h:img.height,w:img.width,b64:can.toDataURL()} );
 						if( --pend<1 ) {
-							console.debug( 'images', images );
 							// all images have been converted, continue processing:
 				//			if( typeof(fn)=='function' ) fn()
 							createOxml()
