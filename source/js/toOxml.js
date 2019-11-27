@@ -39,48 +39,100 @@ function toOxml( data, opts ) {
 	
 //	console.debug('toOxml',data,opts);
 	// Create a local list of images, which can be used in OXML:
+	// - Take any raster image right away,
+	// - If SVG, look if there is a sibling (same filename) of type PNG. If so take it.
+	// To get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 	// ToDo: Transform SVG to PNG, if not present.
-	// to get the image size, see: https://stackoverflow.com/questions/8903854/check-image-width-and-height-before-upload-with-javascript
 	var images = [],
 		pend = 0;		// the number of pending operations
 
 //	console.debug('files',data.files);
 	if( data.files && data.files.length>0 )
-		data.files.forEach( function(f) {
-			if ( f.blob && ['image/png','image/jpg','image/jpeg','image/gif'].indexOf(f.type)>-1) {
-				pend++;
-				// transform the file and continue processing, as soon as all are done:
-				image2base64(f,createOxml);
-				console.info("File '"+f.id+"' transformed to Base64");
+		data.files.forEach( function(f,i,L) {
+			if( !f.blob ) {
+				console.warn("File '"+f.title+"' content is missing.");
 				return
 			};
-			console.warn("Format of file '"+f.id+"' is not supported by MS Word.")
+			if ( ['image/png','image/jpg','image/jpeg','image/gif'].indexOf(f.type)>-1 ) {
+				pend++;
+				// transform the file and continue processing, as soon as all are done:
+				raster2base64(f,createOxml);
+				console.info("File '"+f.title+"' made available as Base64");
+				return
+			};
+			if ( ['image/svg+xml'].indexOf(f.type)>-1 ) {
+				let pngN = nameOf(f.title)+'.png';
+				// check whether there is already a PNG version of this image:
+				if( itemByTitle( L, pngN ) ) {
+					console.info("File '"+f.title+"' has a sibling of type PNG");
+					// The PNG file has been added to images, before.
+					return
+				};
+				// else, transform SVG to PNG:
+				// see: https://stackoverflow.com/questions/5433806/convert-embedded-svg-to-png-in-place
+				pend++;
+				let can = document.createElement('canvas'), // Not shown on page
+					ctx = can.getContext('2d'),
+					img = new Image(),                      // Not shown on page
+					svg;
+				blob2text(f,function(r,fTi,fTy) {
+					console.debug("File ", fTi, fTy, r );
+					svg = r;
+					img.addEventListener('loadend', function(){
+						console.debug('img',img);
+						ctx.drawImage( img, 0, 0, img.width, img.height );
+				//		ctx.drawImage( img, 0, 0 );
+				//		tgtImage.src = can.toDataURL()
+						// please note the different use of 'id' and 'title' in specif.files and images!
+						images.push( {id:pngN,type:'image/png',h:img.height,w:img.width,b64:can.toDataURL()} );
+						if( --pend<1 ) {
+							console.debug( 'images', images );
+							// all images have been converted, continue processing:
+				//			if( typeof(fn)=='function' ) fn()
+							createOxml()
+						}
+					});
+				/*	img.height = 500;
+					img.width = 1000; */
+					img.src = 'data:image/svg+xml,' + encodeURIComponent( svg );
+				})  
+
+
+				console.info("File '"+f.title+"' transformed to PNG and made available as Base64");
+				return
+			};
+			console.warn("Format of file '"+f.title+"' is not supported by MS Word.")
 		});
 	if( pend<1 ) 
 		// start right away when there are no images to convert:
 		createOxml();
 	return;
 
-	// Convert an image to base64:
-	function image2base64(f,fn) {			
+	// Convert a raster image to base64:
+	function raster2base64(f,fn) {			
+		function storeImg(ev) {
+//			console.debug('#',ev);
+			// please note the different use of 'id' and 'title' in file and images!
+			images.push( {id:f.title,type:f.type,h:ev.target.height,w:ev.target.width,b64:ev.target.src} );
+			if( --pend<1 ) {
+				// all images have been converted, continue processing:
+				if( typeof(fn)=='function' ) fn()
+			}
+		}
 		const reader = new FileReader();
 		reader.addEventListener('loadend', function(e) {
 			// Obtain width and height
-			function store(ev) {
-//				console.debug('#',ev);
-				// please note the different use of 'id' and 'title' in file and images!
-				images.push( {id:f.title,type:f.type,h:ev.target.height,w:ev.target.width,b64:ev.target.src} );
-				if( --pend<1 ) {
-					// all images have been converted, continue processing:
-					if( typeof(fn)=='function' ) fn()
-				}
-			}
 			let img = new Image();   
-			img.addEventListener('load', store, false); 
+			img.addEventListener('loadend', storeImg, false); 
 			img.src = e.target.result
 		});
 		reader.readAsDataURL(f.blob)
 	}
+	function blob2text(f,fn) {
+		const reader = new FileReader();
+		reader.addEventListener('loadend', function(e) { fn(e.target.result,f.title,f.type) });
+		reader.readAsText(f.blob)
+	} 
 	
 // -----------------------
 	function createOxml() {
@@ -317,9 +369,8 @@ function toOxml( data, opts ) {
 				r.descriptions.forEach( function(prp) {
 					valOf( prp ).forEach(function(e){ c1 += generateOxml(e) })
 				});
-				console.debug('properties',r,c1);
+//				console.debug('properties',r,c1);
 				// Skip the remaining properties, if no label is provided:
-//				console.debug('properties',c1);
 				if( !opts.propertiesLabel ) return c1;
 				
 			/*	// Add a property 'SpecIF:Class':
@@ -679,13 +730,6 @@ function toOxml( data, opts ) {
 						var run; 
 //						console.debug('parseObject', obj);
 
-							function withoutPath( str ) {
-								return str.substring(str.lastIndexOf('/')+1)
-							}
-							function nameOf( str ) {
-								return str.substring( 0, str.lastIndexOf('.') )
-							}
-
 						let u1 = getPrp( 'data', obj.properties ).replace('\\','/'), 
 							t1 = getPrp( 'type', obj.properties ),
 							d = obj.innerHTML || getPrp( 'name', obj.properties ) || withoutPath( u1 ),	// the description
@@ -694,14 +738,15 @@ function toOxml( data, opts ) {
 						if( opts.imgExtensions.indexOf( e )>-1 ) {  
 							// It is an image, show it;
 							// if the type is svg, png is preferred and available, replace it:
-							let pngF = itemByTitle( data.files, nameOf(u1)+'.png' );
-//							console.debug('parseObject',e,pngF);
+							let pngF = itemById( images, nameOf(u1)+'.png' );
+//							console.debug('parseObject',u1,e,pngF);
 							if( t1.indexOf('svg')>-1 && opts.preferPng && pngF ) {
-								u1 = pngF.title;
+								u1 = pngF.id;
 								t1 = pngF.type
 							};
 							// At the lowest level, the image is included only if present:
-							run = {picture:{id:u1,title:d,type:t1,width:'200pt',height:'100pt'}}
+						//	run = {picture:{id:u1,title:d,type:t1,width:'200pt',height:'100pt'}}
+							run = {picture:{id:u1,title:d,type:t1}}
 						} else {
 							// in absence of an image, just show the description:
 							run = {text:d}
@@ -792,7 +837,7 @@ function toOxml( data, opts ) {
 						level: lvl,
 						nodeId: nd.id
 					};
-				console.debug( 'r',nd,r );
+					
 				r = opts.classifyProperties( r, data );	
 				var ch = 	titleOf( r, params, opts )
 						+	propertiesOf( r, opts )
@@ -2346,6 +2391,12 @@ function toOxml( data, opts ) {
 		var nL = [];
 		L.forEach( function(e){ var r=fn(e); if(r) nL.push(r) } );
 		return nL
+	}
+	function withoutPath( str ) {
+		return str.substring(str.lastIndexOf('/')+1)
+	}
+	function nameOf( str ) {
+		return str.substring( 0, str.lastIndexOf('.') )
 	}
 	function extOf( s ) {
 		// get the file extension without the '.':
