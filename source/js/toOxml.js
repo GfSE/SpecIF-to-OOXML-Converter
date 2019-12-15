@@ -469,7 +469,7 @@ function toOxml( data, opts ) {
 						let bL = [];
 						// look for the next block-level construct with any preceding text,
 						// be sure to consume the transformed text in every loop.
-						// To maintain the sequence, any block-level construct is matched in a first step ...
+						// To maintain the sequence, in a first step any block-level construct is matched:
 						txt = txt.replace( reBlocks, function($0,$1,$2) {
 							// ... and then the difference is made:
 //							console.debug('lets go',$0,$1,$2);
@@ -480,22 +480,22 @@ function toOxml( data, opts ) {
 								bL.push( {p:{text:$1}} );
 								return ''
 							});
-							// a) any text preceding the block:
+							// b) any text preceding the block:
 							//    In fact, if the XHTML is properly built, there shouldn't be any content outside the blocks,
 							//    but we do not want to ignore any content in case there is ...
 							if( opts.hasContent($1) ) 
 								bL.push( {p:{text:$1}} );
-							// b) an empty paragraph:
+							// c) an empty paragraph:
 							if( /<p *\/>/.test($2) ) {
 								bL.push( {p:{text:''}} );
 								return ''
 							};
-							// c) a paragraph:
+							// d) a paragraph:
 							$2 = $2.replace(/<p[^>]*>([\s\S]*?)<\/p>/, function($0,$1) {
 								bL.push( {p:{text:$1.trim()}} );
 								return ''
 							});
-							// d) an unordered list:
+							// e) an unordered list:
 							$2 = $2.replace(/<ul>([\s\S]*?)<\/ul>/, function($0,$1) {
 								$1.replace(/<li>([\s\S]*?)<\/li>/g, function($0,$1) {
 									bL.push( {p:{text:$1.trim(),style:'bulleted'}} );
@@ -503,7 +503,7 @@ function toOxml( data, opts ) {
 								});
 								return ''
 							});
-							// e) an ordered list:
+							// f) an ordered list:
 							$2 = $2.replace(/<ol>([\s\S]*?)<\/ol>/, function($0,$1) {
 								$1.replace(/<li>([\s\S]*?)<\/li>/g, function($0,$1) {
 									bL.push( {p:{text:$1.trim(),style:'numbered'}} );
@@ -511,7 +511,7 @@ function toOxml( data, opts ) {
 								});
 								return ''
 							});
-							// f) a table:
+							// g) a table:
 							var tbl = {
 								rows: []
 							};
@@ -545,6 +545,7 @@ function toOxml( data, opts ) {
 											// where the content is in $1, if provided:
 //											console.debug('th',$0,'|',$1);
 											// the 'th' cell with it's content
+											// $1 is undefined in case of <th/>
 											cs.push( {p:{text:($1||nbsp).trim(), font:{weight:'bold'}}, border:{style:'single'}} )
 											// ToDo: Somehow the text is not printed boldly ...
 											return ''
@@ -554,6 +555,7 @@ function toOxml( data, opts ) {
 											// where the content is in $1, if provided:
 //											console.debug('td',$0,'|',$1);
 											// the 'td' cell with it's content
+											// $1 is undefined in case of <td/>
 											cs.push( {p:{text:($1||nbsp).trim()}, border:{style:'single'}} )
 											return ''
 											});
@@ -1111,17 +1113,17 @@ function toOxml( data, opts ) {
 					+		'<w:vAlign w:val="center"/>'
 					+	'</w:tcPr>'
 					+ (c.content || c)
-					+ '</w:tc>'
+					+ '</w:tc>';
 					
-					function tcBorders(c) {
-						if( !c.border ) return '';
-						return 	'<w:tcBorders>'
-							+		'<w:top w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
-							+		'<w:left w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
-							+		'<w:bottom w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
-							+		'<w:right w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
-							+	'</w:tcBorders>'
-					}
+				function tcBorders(c) {
+					if( !c.border ) return '';
+					return 	'<w:tcBorders>'
+						+		'<w:top w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
+						+		'<w:left w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
+						+		'<w:bottom w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
+						+		'<w:right w:val="'+(c.border.type||'single')+'" w:sz="'+(c.border.width||4)+'" w:space="0" w:color="'+(c.border.color||'DDDDDD')+'"/>'
+						+	'</w:tcBorders>'
+				}
 			}
 		}  // end of 'createText'
 
