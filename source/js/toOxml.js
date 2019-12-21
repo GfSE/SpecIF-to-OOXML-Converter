@@ -29,11 +29,15 @@ function toOxml( data, opts ) {
 	if( typeof(opts.imageResolution)!='number' ) opts.imageResolution = 8; // 10 dots per mm = ~256 dpi
 	if( typeof(opts.marginLeft)!='number' ) opts.marginLeft = 25; // mm
 	if( typeof(opts.marginRight)!='number' ) opts.marginRight = 25; // mm
+	if( typeof(opts.marginTop)!='number' ) opts.marginTop = 25; // mm
+	if( typeof(opts.marginBottom)!='number' ) opts.marginBottom = 40; // mm
 
 	const startRID = 7,		// first relationship index for images
 		maxHeading = 4,  	// Headings from 1 to maxHeading are defined
+		pageHeight = 298,
 		pageWidth = 210,	// mm for A4
 		columnWidth = pageWidth-opts.marginLeft-opts.marginRight,
+		columnHeight = pageHeight-opts.marginTop-opts.marginBottom,
 		twips = 56.692913385826,  // twips per mm
 		REAmpersandPlus = new RegExp( '&(.{0,8})', 'g' ),
 		REXMLmin = new RegExp( '&(amp|#x[0]*26|#[0]*38|lt|#x[0]*3C|#x[0]*3c|#[0]*60|gt|#x[0]*3E|#x[0]*3e|#[0]*62);', '');
@@ -104,9 +108,9 @@ function toOxml( data, opts ) {
 					img.addEventListener('loadend', function(){
 						can.width = img.width;
 						can.height = img.height;
-						console.debug('img',img);
+//						console.debug('img',img);
 						ctx.drawImage( img, 0, 0 );
-						console.debug('img png',can.toDataURL());
+//						console.debug('img png',can.toDataURL());
 						// please note the different use of 'id' and 'title' in specif.files and images!
 						images.push( {id:pngN,type:'image/png',h:img.height,w:img.width,b64:can.toDataURL()} );
 						if( --pend<1 ) {
@@ -1046,9 +1050,21 @@ function toOxml( data, opts ) {
 //				console.debug('pushReferencedFile',oxml.relations,n);
 				let rIdx = pushReferencedFile( ct.picture );
 				// else, all is fine:
-				let img = images[imgIdx],
-					w = Math.min( img.w / opts.imageResolution, columnWidth ),
-					h = w>0? (img.h / img.w * w) : 0;
+				let img = images[imgIdx];
+				if( img.w<1 || img.h<1 )
+					return '';
+				
+				let	w = Math.min( img.w / opts.imageResolution, columnWidth ),
+					h = Math.min( img.h / opts.imageResolution, columnHeight );
+				
+				// Maintain aspect ratio if height or width has been limited:
+				if( w/img.w > h/img.h )
+					// h has been limited by the available height:
+					w = img.w / img.h * h;
+				if( h/img.h > w/img.w )
+					// w has been limited by the available width:
+					h = img.h / img.w * w;
+
 //				console.debug('wPict',ct,img,h,w);
 				return	'<w:pict>'
 					// we need to specify both width and height; WORD is not assuming the native aspect ratio:
