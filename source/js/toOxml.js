@@ -17,6 +17,10 @@ function toOxml( data, opts ) {
 	};
 	
 	// Check for missing options:
+	if( !opts.dataTypeString ) opts.dataTypeString = 'xs:string';
+	if( !opts.dataTypeXhtml ) opts.dataTypeXhtml = 'xhtml';
+	if( !opts.dataTypeEnumeration ) opts.dataTypeEnumeration = 'xs:enumeration';
+
 	if( typeof(opts)!='object' ) opts = {};
 //	if( !opts.metaFontSize ) opts.metaFontSize = '70%';	
 //	if( !opts.metaFontColor ) opts.metaFontColor = '#0071B9';	// adesso blue
@@ -24,8 +28,7 @@ function toOxml( data, opts ) {
 //	if( !opts.linkFontColor ) opts.linkFontColor = '#005A92';	// darker
 //	if( typeof(opts.linkNotUnderlined)!='boolean' ) opts.linkNotUnderlined = false;
 	if( typeof(opts.preferPng)!='boolean' ) opts.preferPng = true;
-	if( typeof(opts.RE)!='object' ) opts.RE = {};
-
+	
 	if( typeof(opts.imageResolution)!='number' ) opts.imageResolution = 8; // 10 dots per mm = ~256 dpi
 	if( typeof(opts.marginLeft)!='number' ) opts.marginLeft = 25; // mm
 	if( typeof(opts.marginRight)!='number' ) opts.marginRight = 25; // mm
@@ -184,7 +187,10 @@ function toOxml( data, opts ) {
 				reBlocks = new RegExp(reB,'g');
 				
 			let reA = '<a([^>]+)>([\\s\\S]*?)</a>',
-				reLink = new RegExp( reA, '' );
+				reLink = new RegExp( reA, '' ),
+			// A single comprehensive <img .../> or tag pair <img ...>..</img>.
+				reI = '<img([^>]+)/>',
+				reImg = new RegExp( reI, '' );
 			// A single comprehensive <object .../> or tag pair <object ...>..</object>.
 			// Limitation: the innerHTML may not have any tags.
 			// The [^<] assures that just the single object is matched. With [\\s\\S] also nested objects match for some reason.
@@ -199,6 +205,7 @@ function toOxml( data, opts ) {
 			let reR = '([\\s\\S]*?)('
 				+	'<b>|</b>|<i>|</i>|<em>|</em>|<span[^>]*>|</span>'
 				+	'|'+reA
+				+	'|'+reI
 				// The nested object pattern must be checked before the single object pattern:
 		//		+	'|'+reNO
 				+	'|'+reSO
@@ -654,9 +661,14 @@ function toOxml( data, opts ) {
 								};
 								// A web link:
 								sp = reLink.exec($2);   
-//								console.debug('#L',sp);
 								if( sp && sp.length>2 ) {
 									p.runs.push(parseA( {properties:sp[1],innerHTML:sp[2]} ));
+									return ''
+								};
+								// An image:
+								sp = reImg.exec($2);   
+								if( sp && sp.length>1 ) {
+									p.runs.push(parseImg( {properties:sp[1]} ));
 									return ''
 								};
 						/*		// Two nested objects, where the inner can have a comprehensive tag or a tag pair;
@@ -675,8 +687,7 @@ function toOxml( data, opts ) {
 								};   */
 								// Single object with a comprehensive tag or a tag pair:
 								sp = reSingleObject.exec($2);   
-//								console.debug('#1O',sp);
-								if( sp && sp.length>2 ) {
+								if( sp && sp.length>3 ) {
 									p.runs.push(parseObject( {properties:sp[1],innerHTML:sp[3]} ));
 									return ''
 								};
@@ -731,7 +742,7 @@ function toOxml( data, opts ) {
 						var run,
 						// single object with a comprehensive tag or a tag pair:
 							sp = reSingleObject.exec( lnk.innerHTML );   
-						if( sp && sp.length>2 )
+						if( sp && sp.length>3 )
 							run = parseObject( {properties:sp[1],innerHTML:sp[3]} )
 							// Limitation: Any text will be ignored, if an object is found ...
 						else	
@@ -741,6 +752,32 @@ function toOxml( data, opts ) {
 
 //						console.debug('parseA',run);
 						return run
+					}
+					function parseImg( img ) {  // details of an image tag
+						// Parse content of an <img> tag, usually with an image and return a 'run' element:
+						// Todo: Load a linked resource in the <img..> tag and include it in the document?
+//						console.debug('parseImg *1', img);
+
+						let u1 = getPrp( 'src', img.properties ).replace('\\','/'), 
+							d = getPrp( 'alt', img.properties ) || withoutPath( u1 ),	// the description
+							e = extOf(u1).toLowerCase();	// the file extension
+						
+						if( opts.imgExtensions.indexOf( e )>-1 ) {  
+							// It is an image, show it;
+							// if the type is svg, png is preferred and available, replace it:
+							let pngF = itemById( images, nameOf(u1)+'.png' );
+//							console.debug('parseImg *2',u1,e,pngF);
+							if( e.indexOf('svg')>-1 && opts.preferPng && pngF ) {
+							//	t1 = pngF.type;
+								u1 = pngF.id
+							};
+							// At the lowest level, the image is included only if present:
+//							console.debug('parseImg *3',u1,d,t1);
+							return { text:d, hyperlink:{ external: u1 } }
+						} else {
+							// in absence of an image, just show the description:
+							return { text:d }
+						}
 					}
 					function parseObject( obj ) {  // details of an XHTML object
 						// Parse content of an <object> tag, usually with an image or a file reference
@@ -761,8 +798,8 @@ function toOxml( data, opts ) {
 							let pngF = itemById( images, nameOf(u1)+'.png' );
 //							console.debug('parseObject *2',u1,e,pngF);
 							if( ( t1.indexOf('svg')>-1 || t1.indexOf('bpmn')>-1 ) && opts.preferPng && pngF ) {
-								u1 = pngF.id;
-								t1 = pngF.type
+								t1 = pngF.type;
+								u1 = pngF.id
 							};
 							// At the lowest level, the image is included only if present:
 //							console.debug('parseObject *3',u1,d,t1);
@@ -822,7 +859,7 @@ function toOxml( data, opts ) {
 					if(prp['class']) {
 						let dT = itemById( data.dataTypes, propertyClassOf( prp['class']).dataType );
 						switch( dT.type ) {
-							case 'xs:enumeration':
+							case opts.dataTypeEnumeration:
 								let ct = '',
 									val = null,
 									st = opts.stereotypeProperties.indexOf(prp.title)>-1,
@@ -835,10 +872,10 @@ function toOxml( data, opts ) {
 									else ct += (v==0?'':', ')+vL[v]
 								};
 								return [{p:{text:minEscape(ct)}}];
-							case 'xhtml':
+							case opts.dataTypeXhtml:
 //								console.debug('valOf - xhtml',prp.value);
 								return parseXhtml( prp.value, opts );
-							case 'xs:string':
+							case opts.dataTypeString:
 								return parseText( prp.value, opts )
 						}
 					};
