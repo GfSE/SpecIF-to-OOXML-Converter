@@ -28,9 +28,12 @@ function toOxml( data, opts ) {
 
 	if( typeof(opts)!='object' ) opts = {};
 //	if( !opts.metaFontSize ) opts.metaFontSize = '70%';	
-//	if( !opts.metaFontColor ) opts.metaFontColor = '#0071B9';	// adesso blue
-//	if( !opts.linkFontColor ) opts.linkFontColor = '#0071B9';
-//	if( !opts.linkFontColor ) opts.linkFontColor = '#005A92';	// darker
+//	if( !opts.metaFontColor ) opts.metaFontColor = '0071B9';	// adesso blue
+//	if( !opts.linkFontColor ) opts.linkFontColor = '0071B9';
+//	if( !opts.linkFontColor ) opts.linkFontColor = '005A92';	// darker
+//	if( !opts.colorAccent1 ) opts.colorAccent1 = '5B9BD5';   // original Office
+	if( !opts.colorAccent1 ) opts.colorAccent1 = '0071B9';  // adesso blue
+
 //	if( typeof(opts.linkNotUnderlined)!='boolean' ) opts.linkNotUnderlined = false;
 	if( typeof(opts.preferPng)!='boolean' ) opts.preferPng = true;
 	
@@ -83,7 +86,6 @@ function toOxml( data, opts ) {
 					}
 				pend++;
 				let img = new Image();   
-			//	$(img).on('load', storeR );
 				img.addEventListener('load', storeR, false ); // 'loadend' does not work in Chrome
 				const reader = new FileReader();
 				reader.addEventListener('loadend', function(e) {
@@ -121,7 +123,6 @@ function toOxml( data, opts ) {
 				let can = document.createElement('canvas'), // Not shown on page
 					ctx = can.getContext('2d'),
 					img = new Image();                      // Not shown on page
-			//	$(img).on('load', storeV );
 				img.addEventListener('load', storeV, false ) // 'loadend' does not work in Chrome
 
 				const reader = new FileReader();
@@ -159,17 +160,16 @@ function toOxml( data, opts ) {
 			};
 			if( typeof(opts.showEmptyProperties)!='boolean' ) opts.showEmptyProperties = false;
 			if( typeof(opts.hasContent)!='function' ) opts.hasContent = hasContent;
-			if( typeof(opts.lookupTitles)!='boolean' ) opts.lookupTitles = false;
-			if( !opts.lookupTitles || typeof(opts.lookup)!='function' )
-				opts.lookup = function(str) { return str };
+			if( typeof(opts.lookup)!='function' ) opts.lookup = function(str) { return str };
 			// If a hidden property is defined with value, it is suppressed only if it has this value;
 			// if the value is undefined, the property is suppressed in all cases.
 			if( !opts.hiddenProperties ) opts.hiddenProperties = [];
 			if( !opts.stereotypeProperties ) opts.stereotypeProperties = ['UML:Stereotype'];	
 		
 			// If no label is provided, the respective properties are skipped:
-			if( opts.propertiesLabel && opts.lookupTitles ) opts.propertiesLabel = opts.lookup( opts.propertiesLabel );	
-			if( opts.statementsLabel && opts.lookupTitles ) opts.statementsLabel = opts.lookup( opts.statementsLabel );	
+			if( opts.propertiesLabel ) opts.propertiesLabel = opts.lookup( opts.propertiesLabel );	
+			if( opts.statementsLabel ) opts.statementsLabel = opts.lookup( opts.statementsLabel );	
+			
 			if( !opts.titleLinkBegin ) opts.titleLinkBegin = '\\[\\[';		// must escape javascript AND RegExp
 			if( !opts.titleLinkEnd ) opts.titleLinkEnd = '\\]\\]';			// must escape javascript AND RegExp
 			if( typeof(opts.titleLinkMinLength)!='number' ) opts.titleLinkMinLength = 3;	
@@ -183,14 +183,14 @@ function toOxml( data, opts ) {
 
 			// see: http://webreference.com/xml/reference/xhtml.html
 			// The Regex to isolate text blocks for paragraphs:
-			let reB = '([\\s\\S]*?)'
+			const reB = '([\\s\\S]*?)'
 				+	'(<p */>|<p[^>]*>[\\s\\S]*?</p>'
 				+	'|<ul[^>]*>[\\s\\S]*?</ul>'
 				+	'|<ol[^>]*>[\\s\\S]*?</ol>'
 				+	'|<table[^>]*>[\\s\\S]*?</table>)',
 				reBlocks = new RegExp(reB,'g');
 				
-			let reA = '<a([^>]+)>([\\s\\S]*?)</a>',
+			const reA = '<a([^>]+)>([\\s\\S]*?)</a>',
 				reLink = new RegExp( reA, '' ),
 			// A single comprehensive <img .../> or tag pair <img ...>..</img>.
 				reI = '<img([^>]+)/>',
@@ -198,15 +198,15 @@ function toOxml( data, opts ) {
 			// A single comprehensive <object .../> or tag pair <object ...>..</object>.
 			// Limitation: the innerHTML may not have any tags.
 			// The [^<] assures that just the single object is matched. With [\\s\\S] also nested objects match for some reason.
-			let reSO = '<object([^>]+)(/>|>([^<]*?)</object>)',
+			const reSO = '<object([^>]+)(/>|>([^<]*?)</object>)',
 				reSingleObject = new RegExp( reSO, '' );
 			// Two nested objects, where the inner is a comprehensive <object .../> or a tag pair <object ...>..</object>:
 			// .. but nothing useful can be done in a WORD file with the outer object ( for details see below in splitRuns() ).
-		//	let reNO = '<object([^>]+)>[\\s]*'+reSO+'([\\s\\S]*)</object>',
+		//	const reNO = '<object([^>]+)>[\\s]*'+reSO+'([\\s\\S]*)</object>',
 		//		reNestedObjects = new RegExp( reNO, '' );
 		
 			// The Regex to isolate text runs constituting a paragraph:
-			let reR = '([\\s\\S]*?)('
+			const reR = '([\\s\\S]*?)('
 				+	'<b>|</b>|<i>|</i>|<em>|</em>|<span[^>]*>|</span>'
 				+	'|'+reA
 				+	'|'+reI
@@ -217,7 +217,7 @@ function toOxml( data, opts ) {
 				+	')',
 				reRuns = new RegExp(reR,'g');
 			// The Regex to isolate text fragments within a run:
-			let reT = '(.*?)(<br ?/>)',
+			const reT = '(.*?)(<br ?/>)',
 				reText = new RegExp(reT,'g');
 			
 			// All required parameters are available, so we can begin:
@@ -238,22 +238,27 @@ function toOxml( data, opts ) {
 			return oxml
 			
 			// ---------------
-			function titleOf( r, pars, opts ) { // resource, resourceClass, parameters, options
+			function titleOf( itm, pars, opts ) { // resource, resourceClass, parameters, options
 				// render the resource title
 				// designed for use also by statements.
 				
-				// depending on the context, r['class'] is an class object or a class id:
-				let rC = r['class'].id? r['class'] : itemById( data.resourceClasses, r['class'] );
+				// depending on the context, itm['class'] is a class object or a class id:
+				let cL = itm.subject? data.statementClasses : data.resourceClasses,
+					rC = itm['class'].id? itm['class'] : itemById( cL, itm['class'] );
 				
-				let ti = minEscape( r.title ),
-					ic = rC.icon;
-				if( typeof(ic)!='string' ) ic = '';
-				if( ic ) ic += nbsp;
+				let ti = minEscape( itm.title ),
+					ic = rC&&rC.icon? rC.icon+nbsp : '';
+					
+				// in case of a statement take the class' title by default:
+				if( itm.subject && !ti && rC ) ti = minEscape( rC.title );
+				
 				if( !pars || pars.level<1 ) return  (ti?ic+ti:'');  // return raw text
+
 				// SpecIF headings are chapter level 2, all others level 3:
 				let l = pars.level==1? 1:rC.isHeading? 2:3;
-
-//				console.debug('titleOf',r,ti);
+				console.debug('titleOf',itm,ic,ti);
+				// no paragraph, if title is empty:
+				if( !ti ) return '';
 				// all titles get a bookmark, so that any titleLink has a target:
 				return wParagraph( {text: (ti?ic+ti:''), heading:l, bookmark:pars.nodeId } )
 			}	
@@ -261,10 +266,14 @@ function toOxml( data, opts ) {
 			function statementsOf( r, opts ) {
 				// get the statements of the resource as table:
 				if( !opts.statementsLabel ) return '';
+				
 				let sts={}, cid, oid, sid, noSts=true;
 				// Sort statements by type:
 				data.statements.forEach( function(st) {		// all statements
-					cid = st['class'];	 // class id of st
+					// all statements having the same title are clustered:
+					cid = titleOf(st);
+				/*	// all statements having the same class are clustered:
+					cid = st['class']; */
 					// SpecIF v0.10.x: subject/object without revision, v0.11.y: with revision
 					sid = st.subject.id || st.subject;
 					oid = st.object.id || st.object;
@@ -284,8 +293,11 @@ function toOxml( data, opts ) {
 					sTi, row, cell;
 				// build a table of the statements/relations by type:
 				for( cid in sts ) {
+					// if we have clustered by title:
+					sTi = opts.lookup( cid );
+				/*	// if we have clustered by class:
 					// we don't have the individual statement's title; so we determine the class to get it's title, instead:
-					sTi = opts.lookup( itemById(data.statementClasses,cid).title );
+					sTi = opts.lookup( itemById(data.statementClasses,cid).title ); */
 
 					// 3 columns:
 					if( sts[cid].subjects.length>0 ) {
@@ -295,7 +307,8 @@ function toOxml( data, opts ) {
 							// it may happen that an element is undefined:
 							if( s )
 								cell += wParagraph({
-											text: titleOf( s, null, opts ), 
+											text:titleOf( s, null, opts ), 
+											font: {color:opts.colorAccent1},
 											hyperlink: {internal:anchorOf( s )}, 
 											noSpacing: true,
 											align: 'end'
@@ -312,6 +325,7 @@ function toOxml( data, opts ) {
 							row += wTableCell({
 									content:wParagraph({
 											text:sTi,
+											font: {color:opts.colorAccent1},
 											align:'center',
 											noSpacing:true
 									}),
@@ -320,7 +334,8 @@ function toOxml( data, opts ) {
 							// The object:
 							row += wTableCell({
 									content:wParagraph({ 
-											text: titleOf( r, null, opts ), 
+											text:titleOf( r, null, opts ), 
+											font: {color:opts.colorAccent1},
 											noSpacing: true
 									}),
 									border: {type:'single'}
@@ -337,6 +352,7 @@ function toOxml( data, opts ) {
 							if( o )
 								cell += wParagraph({
 											text:titleOf( o, null, opts ), 
+											font: {color:opts.colorAccent1},
 											hyperlink:{internal:anchorOf( o )},
 											noSpacing: true
 								})
@@ -347,6 +363,7 @@ function toOxml( data, opts ) {
 							row = wTableCell({
 									content:wParagraph({
 											text:titleOf( r, null, opts ),
+											font: {color:opts.colorAccent1},
 											noSpacing: true,
 											align:'end'
 									}), 
@@ -356,6 +373,7 @@ function toOxml( data, opts ) {
 							row += wTableCell({
 									content:wParagraph({
 											text:sTi,
+											font: {color:opts.colorAccent1},
 											align:'center',
 											noSpacing:true
 									}),
@@ -431,12 +449,12 @@ function toOxml( data, opts ) {
 					if( opts.hasContent(prp.value) || opts.showEmptyProperties ) {
 						rt = minEscape( opts.lookup( prp.title || propertyClassOf( prp['class'] ).title ));
 						c3 = '';
-						propertyValueOf( prp ).forEach(function(e){ c3 += generateOxml(e) });
+						propertyValueOf( prp ).forEach(function(e){ c3 += generateOxml(e,{font:{color:opts.colorAccent1}}) });
 //						console.debug('other properties',prp,rt,c3);
 						rows += wTableRow( wTableCell( wParagraph({
 														text:rt,
-														align:'end',
-														font:{style:'italic'}
+														font:{style:'italic',color:opts.colorAccent1},
+														align:'end'
 													})) 
 											+ wTableCell( c3 ))
 					}
@@ -458,7 +476,7 @@ function toOxml( data, opts ) {
 					let arr = txt.split(/\n/);
 //					console.debug('parseText',txt,arr);
 					// return a list with a paragraph for each of the arr elements:
-					return forAll(arr,function(s) {return {p:{text:s}}} )
+					return forAll( arr, function(s) {return {p:{text:s}}} )
 				}
 				function parseXhtml( txt, opts ) {
 					// Parse formatted text.
@@ -886,18 +904,18 @@ function toOxml( data, opts ) {
 									st = opts.stereotypeProperties.indexOf(prp.title)>-1,
 									vL = prp.value.split(',');  // in case of xs:enumeration, content carries comma-separated value-IDs
 								for( var v=0,V=vL.length;v<V;v++ ) {
-									val = itemById(dT.values,vL[v].trim());
-									// If 'val' is an id, replace it by title, otherwise don't change:
+									val = itemById(dT.values,vL[v]);
+									// If 'val' is an id, replace it by the corresponding value, otherwise don't change:
 									// Add 'double-angle quotation' in case of SubClass values.
-									if( val ) ct += (v==0?'':', ')+(st?('&#x00ab;'+val.value+'&#x00bb;'):val.value)
-									else ct += (v==0?'':', ')+vL[v]
+									if( val ) ct += (v==0?'':', ')+(st?('&#x00ab;'+opts.lookup(val.value)+'&#x00bb;'):opts.lookup(val.value))
+									else ct += (v==0?'':', ')+vL[v] // ToDo: Check whether this case can occur
 								};
 								return [{p:{text:minEscape(ct)}}];
 							case opts.dataTypeXhtml:
 //								console.debug('propertyValueOf - xhtml',prp.value);
 								return parseXhtml( prp.value, opts );
 							case opts.dataTypeString:
-								return parseText( prp.value, opts )
+								return parseText( opts.lookup(prp.value), opts )
 						}
 					};
 					// for all other dataTypes or when there is no dataType:
@@ -927,17 +945,18 @@ function toOxml( data, opts ) {
 				return ch
 			}
 
-			function generateOxml( ct ) {
+			function generateOxml( ct, fmt ) {
 				return chain( ct,
 					function(ct) {
-						if( ct.p )
-							return wParagraph( ct.p )
+						if( ct.p ) {
+							return wParagraph( addFmt( ct.p, fmt ) )
+						};
 						if( ct.table ) {
 							var rs = '';
 							ct.table.rows.forEach( function(r) {
 								var cs = '';
 								r.cells.forEach( function(c) {
-									cs += wTableCell( {content:wParagraph( c.p ),border:c.border} )
+									cs += wTableCell( {content:wParagraph( addFmt( c.p, fmt ) ),border:c.border} )
 								});
 								rs += wTableRow( cs )
 							});
@@ -947,6 +966,11 @@ function toOxml( data, opts ) {
 					}
 				)
 				
+				function addFmt( p, fmt ) {
+					if( typeof(fmt)=='object' ) 
+						for( var f in fmt ) { p[f] = fmt[f] };
+					return p
+				}
 				function chain( ct, fn ) {
 					if( Array.isArray(ct) ) {
 						var bs = '';
@@ -1328,7 +1352,7 @@ function toOxml( data, opts ) {
 		+									'<a:srgbClr val="E7E6E6"/>'
 		+								'</a:lt2>'
 		+								'<a:accent1>'
-		+									'<a:srgbClr val="5B9BD5"/>'
+		+									'<a:srgbClr val="'+opts.colorAccent1+'"/>'
 		+								'</a:accent1>'
 		+								'<a:accent2>'
 		+									'<a:srgbClr val="ED7D31"/>'
@@ -1346,10 +1370,12 @@ function toOxml( data, opts ) {
 		+									'<a:srgbClr val="70AD47"/>'
 		+								'</a:accent6>'
 		+								'<a:hlink>'
-		+									'<a:srgbClr val="0563C1"/>'
+//		+									'<a:srgbClr val="0563C1"/>'
+		+									'<a:srgbClr val="'+opts.colorAccent1+'"/>'
 		+								'</a:hlink>'
 		+								'<a:folHlink>'
-		+									'<a:srgbClr val="954F72"/>'
+//		+									'<a:srgbClr val="954F72"/>'
+		+									'<a:srgbClr val="'+opts.colorAccent1+'"/>'
 		+								'</a:folHlink>'
 		+							'</a:clrScheme>'
 		+							'<a:fontScheme name="Office">'
@@ -2050,7 +2076,7 @@ function toOxml( data, opts ) {
 		+							'</w:pPr>'
 		+							'<w:rPr>'
 		+								'<w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi"/>'
-		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
+//		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
 		+								'<w:sz w:val="36"/>'
 		+								'<w:szCs w:val="36"/>'
 		+							'</w:rPr>'
@@ -2072,7 +2098,7 @@ function toOxml( data, opts ) {
 		+							'</w:pPr>'
 		+							'<w:rPr>'
 		+								'<w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi"/>						'
-		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
+//		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
 		+								'<w:sz w:val="32"/>'
 		+								'<w:szCs w:val="32"/>'
 		+							'</w:rPr>'
@@ -2093,7 +2119,7 @@ function toOxml( data, opts ) {
 		+							'</w:pPr>							'
 		+							'<w:rPr>							'
 		+								'<w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi"/>						'
-		+								'<w:color w:val="1F4D78" w:themeColor="accent1" w:themeShade="7F"/>'
+//		+								'<w:color w:val="1F4D78" w:themeColor="accent1" w:themeShade="7F"/>'
 		+								'<w:sz w:val="28"/>'
 		+								'<w:szCs w:val="28"/>'
 		+							'</w:rPr>'
@@ -2114,7 +2140,8 @@ function toOxml( data, opts ) {
 		+							'</w:pPr>'
 		+							'<w:rPr>'
 		+								'<w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi"/>'
-		+								'<w:color w:val="1F4D78" w:themeColor="accent1" w:themeShade="7F"/>'
+//		+								'<w:color w:val="1F4D78" w:themeColor="accent1" w:themeShade="7F"/>'
+		+								'<w:color w:val="1F4D78" w:themeColor="accent1" />'
 		+								'<w:sz w:val="24"/>'
 		+								'<w:szCs w:val="24"/>'
 		+							'</w:rPr>'
@@ -2154,7 +2181,7 @@ function toOxml( data, opts ) {
 //		+							'<w:rsid w:val="002D0214"/>'
 		+							'<w:rPr>'
 		+								'<w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi"/>'
-		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
+//		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
 		+								'<w:sz w:val="36"/>'
 		+								'<w:szCs w:val="36"/>'
 		+							'</w:rPr>'
@@ -2167,7 +2194,7 @@ function toOxml( data, opts ) {
 //		+							'<w:rsid w:val="002D0214"/>'
 		+							'<w:rPr>'
 		+								'<w:rFonts w:asciiTheme="majorHAnsi" w:eastAsiaTheme="majorEastAsia" w:hAnsiTheme="majorHAnsi" w:cstheme="majorBidi"/>'
-		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
+//		+								'<w:color w:val="2E74B5" w:themeColor="accent1" w:themeShade="BF"/>'
 		+								'<w:sz w:val="32"/>'
 		+								'<w:szCs w:val="32"/>'
 		+							'</w:rPr>'
@@ -2507,6 +2534,7 @@ function toOxml( data, opts ) {
 	// than MS WORD would correctly show.
 	// Thus transform all but the necessary ones '&' and '<' to UTF-8.
 	function minEscape( s ) {
+		if( !s ) return '';
 		let el = document.createElement('div');
 		// first unescape all HTML entities:
 		return s.replace(/\&#?[0-9a-z]+;/gi, function (enc) {
