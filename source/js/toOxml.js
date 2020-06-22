@@ -1231,7 +1231,7 @@ function toOxml( data, opts ) {
 	let i=null, I=null, 
 		file = createText( data, opts );
 
-	file.name = data.title;
+	file.name = opts.fileName || data.title;
 	file.parts = [];
 	
 	file.parts.push( packGlobalRels() );
