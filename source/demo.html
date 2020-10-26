@@ -114,7 +114,6 @@ var app = {
 	},
 	main: function() {
 		var options = { 
-				classifyProperties: classifyProps,
 				// If a hidden property is defined with value, it is suppressed only if it has this value;
 				// if the value is undefined, the property is suppressed in all cases:
 				hiddenProperties: [{title:'SpecIF:Type',value:'SpecIF:Folder'},{title:'SpecIF:Type',value:'Folder'}],  // type is hidden in case of folder
@@ -146,72 +145,6 @@ var app = {
 					.fail( function(err) {alert(err.statusText)} )
 			};
 			rdr.readAsArrayBuffer( f )
-		}
-		function classifyProps( el ) {
-			"use strict";
-			// add missing (empty) properties and
-			// classify properties into title, descriptions and other;
-			// for resources, statements and hierarchies/specifications.
-			// Note that here 'class' is the class object itself ... and not the id as is the case with SpecIF.
-			var cP = {
-				id: el.id,
-				title: null,
-				class: el['class'],
-				revision: el.revision,
-				descriptions: [],
-				// create a new list by copying the elements (do not copy the list):
-				other: (el.properties&&el.properties.length>0?[].concat( el.properties ):[])
-			};
-//			console.debug('classifyProps',el,cP);
-
-			// Now, all properties are listed in cP.other;
-			// in the following, the properties used as title and description will be identified
-			// and removed from cP.other.
-
-			// a) Find and set the configured title:
-			let a = titleIdx( cP.other );
-			if( a>-1 ) {  // found!
-				// Remove all formatting for the title, as the app's format shall prevail.
-				// Before, remove all marked deletions (as prepared be diffmatchpatch).
-				cP.title = deformat( cP.other[a].value );
-				// remove title from other:
-				cP.other.splice(a,1) 
-			} else {
-				// In certain cases (SpecIF hierarchy root, comment or ReqIF export), there is no title property. 
-				// Here we want only 'real' titles and none, if there is none.
-				cP.title = el.title
-			};
-				
-			// b) Check the configured descriptions:
-			// We must iterate backwards, because we alter the list of other.
-			// ToDo: use cP.other.filter()
-			for( a=cP.other.length-1;a>-1;a-- ) {
-				if( CONFIG.descriptionProperties.indexOf( cP.other[a].title )>-1 ) {
-					// To keep the original order of the properties, the unshift() method is used.
-		//			cP.descriptions.unshift( cP.other.splice(a,1)[0] )
-					cP.descriptions.unshift( cP.other[a] );
-					cP.other.splice(a,1) 
-				}
-			};
-			if( cP.descriptions.length<1 && el.description ) cP.descriptions.push( {title: "dcterms:description", value: el.description} );
-//			console.debug( 'classifyProps', cP.title, cP.descriptions, cP.other );
-			return cP
-			
-			function deformat( str ) {
-				// strip html, but don't use a regex to impede cross-site-scripting (XSS) attacks:
-				return $("<dummy/>").html( str ).text()
-			}
-			function titleIdx( aL ) {
-				// Find the index of the property to be used as title.
-				// The result depends on the current user - only the properties with read permission are taken into consideration
-				for( var a=0,A=aL.length;a<A;a++ ) {
-					// First, check the configured headings:
-					if( CONFIG.headingProperties.indexOf( aL[a].title )>-1 ) return a;
-					// If nothing has been found, check the configured titles:
-					if( CONFIG.titleProperties.indexOf( aL[a].title )>-1 ) return a
-				};
-				return -1
-			}
 		}
 	}
 };
